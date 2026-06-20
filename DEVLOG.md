@@ -149,7 +149,148 @@ npx expo run:ios
 
 ---
 
-## Next: Phase 2 — Foundation
-- ESPN API client
-- League registry (150+ leagues)
-- Basic scoreboard & standings screens
+## Phase 2: Foundation
+**Date**: 2026-06-21
+**Status**: ✅ Complete
+
+---
+
+### 2.1 Dependencies Added
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `@tanstack/react-query` | Latest | Data fetching, caching, background refresh |
+| `@react-navigation/native` | Latest | Navigation framework |
+| `@react-navigation/bottom-tabs` | Latest | Bottom tab navigator |
+| `react-native-screens` | SDK 56 | Native screen containers (performance) |
+| `react-native-safe-area-context` | SDK 56 | Safe area insets (notch, home indicator) |
+| `react-native-reanimated` | SDK 56 | Smooth animations |
+
+### 2.2 Project Structure Created
+
+```
+src/
+├── api/
+│   ├── index.ts          # Barrel export
+│   ├── espn.ts           # ESPN API client (fetch wrapper)
+│   ├── endpoints.ts      # URL builders for all endpoints
+│   └── types.ts          # Full TypeScript types for API responses
+├── hooks/
+│   ├── index.ts
+│   ├── useScoreboard.ts  # Fetch & parse scoreboard data
+│   └── useStandings.ts   # Fetch & parse standings data
+├── screens/
+│   ├── index.ts
+│   ├── ScoresScreen.tsx  # Main scores tab (multi-league)
+│   └── StandingsScreen.tsx # Standings with league picker
+├── components/
+│   ├── index.ts
+│   ├── MatchCard.tsx     # Single match row (home vs away)
+│   └── StandingsTable.tsx # Full league table component
+├── constants/
+│   ├── index.ts
+│   ├── colors.ts         # Dark theme color palette
+│   └── leagues.ts        # Full registry of 150+ leagues
+├── navigation/
+│   └── index.tsx         # Tab navigator with dark theme
+├── hooks/
+├── stores/
+└── utils/
+```
+
+### 2.3 ESPN API Client
+
+- Base client with error handling in `src/api/espn.ts`
+- Two base URLs:
+  - `site.api.espn.com` — scoreboard, match summary
+  - `site.web.api.espn.com` — standings (the only one that works for standings)
+- Endpoints support optional params: `?dates=YYYYMMDD`, `?season=YEAR`
+- TanStack Query handles caching:
+  - Live matches: refetch every 30s
+  - Recent matches: refetch every 5 min
+  - Standings: refetch every 4 hours
+  - Historical seasons: cache indefinitely
+
+### 2.4 League Registry
+
+- **120+ leagues** registered in `src/constants/leagues.ts`
+- Each league has: slug, name, shortName, region, country, hasStandings, tier
+- Helper functions: `getLeagueBySlug()`, `getLeaguesByRegion()`, `getTopLeagues()`
+- 13 default leagues on scoreboard home screen (top European + Americas + Saudi)
+- Organized by 12 regions (fifa, europe, europe-women, usa-canada, mexico, concacaf, south-america, asia, oceania, africa, wcq, other)
+
+### 2.5 Screens Built
+
+#### Scores Screen
+- Fetches scoreboard for all 13 default leagues in parallel
+- Groups matches by league with collapsible sections
+- Shows match count per league
+- Pull-to-refresh support
+- Loading, error, and empty states
+- Live matches highlighted in red
+
+#### Standings Screen
+- Horizontal league picker (top-tier leagues with standings)
+- Full table: #, Team, GP, W, D, L, GD, Pts
+- Zone indicators (colored bars for UCL/UEL/relegation)
+- Positive GD in green, negative in red
+- Pull-to-refresh support
+
+### 2.6 Dark Theme
+
+- AMOLED-friendly dark background (#0F0F0F)
+- Surface cards (#1A1A1A)
+- Green accent for primary actions
+- Red for live indicators
+- Consistent color system in `src/constants/colors.ts`
+
+### 2.7 Navigation
+
+- Bottom tab navigator (Scores | Standings)
+- Dark theme applied globally via NavigationContainer
+- Consistent header styling
+
+### 2.8 Build Verification
+
+- TypeScript: `npx tsc --noEmit` — **0 errors**
+- Metro bundle: 693 modules bundled in 5.8s
+- App running in iPhone 17 Pro Simulator via development build
+
+---
+---
+
+## Phase 2.1: Bug Fixes
+**Date**: 2026-06-21
+**Status**: ✅ Complete
+
+---
+
+### Fix 1: Multi-Group Standings + Sort Order
+- **Problem**: Standings only showed first group (`data.children?.[0]`). Multi-group tournaments like World Cup were incomplete. Also, team order was wrong — API returns entries unsorted, position was assigned by array index.
+- **Solution**: Refactored `useStandings` hook to parse ALL groups from `data.children[]`. Sort entries by `rank` stat from API (not array order). Added `ParsedStandingsGroup` type. `StandingsScreen` now renders each group with its own header.
+- **Files Changed**: `src/api/types.ts`, `src/hooks/useStandings.ts`, `src/screens/StandingsScreen.tsx`
+
+### Fix 2: Season Display Label
+- **Problem**: No indication of which season the standings were for.
+- **Solution**: Extract `seasonDisplayName` from the API response and render it as a centered label above the standings table.
+- **Files Changed**: `src/screens/StandingsScreen.tsx`
+
+### Fix 3: Match Sorting & Live Priority
+- **Problem**: Matches in ScoresScreen were unsorted. Live matches weren't prioritized.
+- **Solution**: Sort matches within each league (live first, then by date). Sort league sections so leagues with live matches appear at the top.
+- **Files Changed**: `src/screens/ScoresScreen.tsx`
+
+### Fix 4: Bracket / Knockout Display
+- **Problem**: Tournaments with knockouts (World Cup, Champions League) only showed group standings. No way to see bracket matches.
+- **Solution**: Added `useTournamentCalendar` hook that fetches calendar entries from the scoreboard endpoint. Added `useBracket` hook that fetches matches for each knockout round by date range. Created `BracketView` component showing round headers with match cards (scores, team logos, status). `StandingsScreen` now shows a Groups/Bracket toggle when knockout rounds are available.
+- **New Files**: `src/hooks/useBracket.ts`, `src/components/BracketView.tsx`
+- **Modified**: `src/api/endpoints.ts`, `src/api/espn.ts`, `src/api/types.ts`, `src/screens/StandingsScreen.tsx`, `src/hooks/index.ts`, `src/components/index.ts`
+
+---
+
+## Next: Phase 3 — Core Experience
+- Date navigation (swipeable date picker)
+- Match detail screen
+- All leagues browsable by region
+- Season picker for standings
+- Search functionality
