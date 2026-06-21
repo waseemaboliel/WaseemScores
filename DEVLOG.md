@@ -416,3 +416,45 @@ src/
 - Native rebuild required: `npx expo prebuild --clean && npx expo run:ios` (expo-notifications, expo-device, expo-constants are native modules)
 - H2H data availability depends on ESPN including it in the match summary response (not all matches have it)
 
+---
+
+## Phase 4 — Core Experience Gaps (2026-06-22)
+
+### 4.1 Swipeable Date Navigation
+- **File**: `src/screens/ScoresScreen.tsx`
+- Added `react-native-gesture-handler` dependency
+- Wrapped app in `GestureHandlerRootView` (`App.tsx`)
+- Pan gesture on scores content: swipe right = previous day, swipe left = next day
+- Threshold: 80px translation to trigger, with `activeOffsetX` and `failOffsetY` to avoid conflicts with vertical scrolling
+- Date picker auto-scrolls to selected date
+
+### 4.2 Leagues Browsable by Region (League Hub)
+- **File**: `src/screens/SearchScreen.tsx`
+- Converted from `FlatList` to `SectionList` with sticky section headers
+- Sections: ⭐ Favorites, 🌍 FIFA/Global, 🇪🇺 Europe, 🌐 Other
+- When searching, shows flat filtered results
+- Tier 1 leagues get a green "Top" badge
+- Tapping a league navigates to Standings tab with that league pre-selected
+- Added `›` chevron indicator for tap affordance
+
+### 4.3 Zone Colors & Relegation Bands
+- **File**: `src/components/StandingsTable.tsx`
+- Zone color bars already worked via ESPN `entry.note.color` field
+- Added zone legend at the bottom of the table (auto-generated from unique notes)
+- Consistent spacing with `zoneBarSpacer` when no zone indicator present
+
+### 4.4 League Tap → Standings Navigation
+- **File**: `src/screens/StandingsScreen.tsx`
+- Accepts `leagueSlug` route param via `useRoute`
+- `useEffect` auto-selects the matching league when navigated from Leagues tab
+
+### 4.5 Stats Screen Fix (TopScorers)
+- **File**: `src/screens/TopScorersScreen.tsx`
+- ESPN returns `shortDisplayValue: "M: 38, G: 29: A: 18"`, not a `statistics` array
+- Fixed parsing with regex: `/M:\s*(\d+)/`, `/G:\s*(\d+)/`, `/A:\s*(\d+)/`
+- Appearances, Goals, Assists now display correctly
+
+### 4.6 Removed Features
+- **Home/Away table views**: ESPN standings API does not provide home/away splits
+- **Form guide (W/D/L dots)**: ESPN standings API has no form data; scoreboard has `competitor.form` but only for teams with matches on that day — insufficient for full table
+

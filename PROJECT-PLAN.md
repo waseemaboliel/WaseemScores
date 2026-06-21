@@ -402,12 +402,14 @@ xcrun simctl list devices available
 
 ---
 
-### Phase 4 — Core Experience Gaps
-- [ ] Swipeable gesture date navigation (swipe between days)
-- [ ] All leagues browsable by region (league hub page)
-- [ ] Qualification zone colors & relegation bands in standings
-- [ ] Home/Away table views in standings
-- [ ] Form guide (last 5 matches as W/D/L dots)
+### Phase 4 — Core Experience Gaps ✅ DONE
+- [x] Swipeable gesture date navigation (swipe between days)
+- [x] All leagues browsable by region (league hub page)
+- [x] Qualification zone colors & relegation bands in standings
+- [x] League tap navigates to Standings with league pre-selected
+- [x] Stats screen fixed (goals/assists/appearances parsing)
+- ~~Home/Away table views~~ (removed — ESPN API doesn't provide home/away splits)
+- ~~Form guide (W/D/L dots)~~ (removed — ESPN API doesn't provide form in standings)
 
 ### Phase 5 — Personalization & Profiles
 - [ ] "My Scores" personalized tab (only favorites)

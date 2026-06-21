@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,9 +8,10 @@ import {
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
+import { useRoute } from '@react-navigation/native';
 import { useStandings, useSeasons, useTournamentCalendar, useBracket, useSeasonBracket } from '../hooks';
 import { StandingsTable, BracketView, StandingsSkeleton } from '../components';
-import { colors, LEAGUES } from '../constants';
+import { colors, LEAGUES, getLeagueBySlug } from '../constants';
 import type { League } from '../constants';
 
 const ALL_LEAGUES = LEAGUES;
@@ -18,9 +19,22 @@ const ALL_LEAGUES = LEAGUES;
 type Tab = 'groups' | 'bracket';
 
 export const StandingsScreen: React.FC = () => {
+    const route = useRoute<any>();
     const [selectedLeague, setSelectedLeague] = useState<League>(ALL_LEAGUES[0]);
     const [activeTab, setActiveTab] = useState<Tab>('groups');
     const [selectedSeason, setSelectedSeason] = useState<number | undefined>(undefined);
+    // Auto-select league when navigated from Leagues tab
+    useEffect(() => {
+        const slug = route.params?.leagueSlug;
+        if (slug) {
+            const league = getLeagueBySlug(slug);
+            if (league) {
+                setSelectedLeague(league);
+                setActiveTab(league.hasStandings ? 'groups' : 'bracket');
+                setSelectedSeason(undefined);
+            }
+        }
+    }, [route.params?.leagueSlug]);
 
     const { data: seasons } = useSeasons(selectedLeague.slug);
 

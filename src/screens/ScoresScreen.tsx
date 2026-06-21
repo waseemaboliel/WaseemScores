@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useCallback } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,10 @@ import {
     RefreshControl,
     TouchableOpacity,
     ScrollView,
+    Dimensions,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { runOnJS } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { espnApi } from '../api';
 import type { ParsedMatch, ScoreboardResponse } from '../api';
@@ -137,6 +140,25 @@ export const ScoresScreen: React.FC = () => {
     const selectedDate = DATES[selectedDateIndex];
     const { favoriteLeagues } = useFavorites();
 
+    const goToPrevDay = useCallback(() => {
+        setSelectedDateIndex((prev) => Math.max(0, prev - 1));
+    }, []);
+
+    const goToNextDay = useCallback(() => {
+        setSelectedDateIndex((prev) => Math.min(DATES.length - 1, prev + 1));
+    }, []);
+
+    const swipeGesture = Gesture.Pan()
+        .activeOffsetX([-30, 30])
+        .failOffsetY([-20, 20])
+        .onEnd((e) => {
+            if (e.translationX > 80) {
+                runOnJS(goToPrevDay)();
+            } else if (e.translationX < -80) {
+                runOnJS(goToNextDay)();
+            }
+        });
+
     const { data, isLoading, isError, refetch, isRefetching } = useQuery({
         queryKey: ['scoreboard', 'all', selectedDate.key],
         queryFn: () => fetchAllScoreboards(selectedDate.key),
@@ -227,7 +249,7 @@ export const ScoresScreen: React.FC = () => {
                 showsHorizontalScrollIndicator={false}
                 style={styles.datePicker}
                 contentContainerStyle={styles.datePickerContent}
-                contentOffset={{ x: Math.max(0, (TODAY_INDEX - 2) * 64), y: 0 }}
+                contentOffset={{ x: Math.max(0, (selectedDateIndex - 2) * 64), y: 0 }}
             >
                 {DATES.map((item, index) => (
                     <TouchableOpacity
@@ -255,8 +277,12 @@ export const ScoresScreen: React.FC = () => {
                 ))}
             </ScrollView>
 
-            {/* Content */}
-            {renderContent()}
+            {/* Content — swipeable */}
+            <GestureDetector gesture={swipeGesture}>
+                <Animated.View style={{ flex: 1 }}>
+                    {renderContent()}
+                </Animated.View>
+            </GestureDetector>
         </View>
     );
 };

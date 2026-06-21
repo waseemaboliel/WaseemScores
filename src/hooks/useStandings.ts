@@ -11,6 +11,7 @@ const parseGroup = (group: any): ParsedStandingsEntry[] => {
                 stats[s.name] = s.value;
             }
         });
+
         return {
             position: stats.rank ?? 0,
             team: {
@@ -32,7 +33,6 @@ const parseGroup = (group: any): ParsedStandingsEntry[] => {
                 : undefined,
         };
     });
-    // Sort by rank (position) ascending
     parsed.sort((a: ParsedStandingsEntry, b: ParsedStandingsEntry) => a.position - b.position);
     return parsed;
 };
@@ -52,15 +52,15 @@ export const useStandings = (slug: string, season?: number) => {
         queryKey: ['standings', slug, season],
         queryFn: () => espnApi.getStandings(slug, season),
         select: parseStandings,
-        staleTime: 4 * 60 * 60 * 1000, // 4 hours
+        staleTime: 4 * 60 * 60 * 1000,
     });
 };
 
 export const useSeasons = (slug: string) => {
     return useQuery({
         queryKey: ['seasons', slug],
-        queryFn: () => espnApi.getStandings(slug, 9999), // Invalid season returns season list
+        queryFn: () => espnApi.getStandings(slug, 9999),
         select: (data) => data.seasons ?? [],
-        staleTime: 24 * 60 * 60 * 1000, // 24 hours
+        staleTime: 24 * 60 * 60 * 1000,
     });
 };

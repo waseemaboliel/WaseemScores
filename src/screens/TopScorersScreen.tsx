@@ -100,10 +100,14 @@ export const TopScorersScreen: React.FC = () => {
 
                     {leaders.map((leader: any, index: number) => {
                         const athlete = leader.athlete;
-                        const statsArr = leader.statistics ?? [];
-                        const appearances = statsArr.find((s: any) => s.name === 'appearances')?.displayValue ?? '-';
-                        const goals = statsArr.find((s: any) => s.name === 'totalGoals')?.displayValue ?? '-';
-                        const assists = statsArr.find((s: any) => s.name === 'goalAssists')?.displayValue ?? '-';
+                        // Parse from shortDisplayValue: "M: 38, G: 29: A: 18"
+                        const short = (leader.shortDisplayValue ?? '') as string;
+                        const matchM = short.match(/M:\s*(\d+)/);
+                        const matchG = short.match(/G:\s*(\d+)/);
+                        const matchA = short.match(/A:\s*(\d+)/);
+                        const appearances = matchM?.[1] ?? '-';
+                        const goals = matchG?.[1] ?? '-';
+                        const assists = matchA?.[1] ?? '-';
 
                         return (
                             <View key={athlete?.id ?? index} style={styles.row}>

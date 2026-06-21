@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import type { ParsedStandingsEntry } from '../api';
 import { colors } from '../constants';
 
@@ -30,8 +30,10 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ entries, leagueN
                 <View key={entry.team.id} style={styles.row}>
                     {/* Position with zone indicator */}
                     <View style={styles.posContainer}>
-                        {entry.note && (
+                        {entry.note ? (
                             <View style={[styles.zoneBar, { backgroundColor: entry.note.color }]} />
+                        ) : (
+                            <View style={styles.zoneBarSpacer} />
                         )}
                         <Text style={styles.posText}>{entry.position}</Text>
                     </View>
@@ -59,6 +61,18 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ entries, leagueN
                     <Text style={[styles.statText, styles.ptsCell, styles.ptsText]}>{entry.points}</Text>
                 </View>
             ))}
+
+            {/* Zone Legend */}
+            {entries.some((e) => e.note) && (
+                <View style={styles.legendContainer}>
+                    {[...new Map(entries.filter((e) => e.note).map((e) => [e.note!.description, e.note!.color])).entries()].map(([desc, color]) => (
+                        <View key={desc} style={styles.legendItem}>
+                            <View style={[styles.legendDot, { backgroundColor: color }]} />
+                            <Text style={styles.legendText} numberOfLines={1}>{desc}</Text>
+                        </View>
+                    ))}
+                </View>
+            )}
         </View>
     );
 };
@@ -101,17 +115,21 @@ const styles = StyleSheet.create({
         borderBottomColor: colors.separator,
     },
     posContainer: {
-        width: 28,
+        width: 32,
         flexDirection: 'row',
         alignItems: 'center',
     },
     posCell: {
-        width: 28,
+        width: 32,
     },
     zoneBar: {
         width: 3,
-        height: 20,
+        height: 24,
         borderRadius: 1.5,
+        marginRight: 6,
+    },
+    zoneBarSpacer: {
+        width: 3,
         marginRight: 6,
     },
     posText: {
@@ -165,5 +183,26 @@ const styles = StyleSheet.create({
     },
     negative: {
         color: colors.loss,
+    },
+    legendContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        gap: 12,
+    },
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    legendDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    legendText: {
+        fontSize: 10,
+        color: colors.textMuted,
     },
 });

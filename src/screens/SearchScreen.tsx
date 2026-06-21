@@ -1,34 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
     TextInput,
-    FlatList,
+    SectionList,
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
-import { colors, LEAGUES } from '../constants';
-import type { League } from '../constants';
+import { useNavigation } from '@react-navigation/native';
+import { colors, LEAGUES, getLeaguesByRegion } from '../constants';
+import type { League, Region } from '../constants';
 import { useFavorites } from '../stores';
+
+const REGION_LABELS: { region: Region; label: string }[] = [
+    { region: 'fifa', label: '🌍 FIFA / Global' },
+    { region: 'europe', label: '🇪🇺 Europe' },
+    { region: 'other', label: '🌐 Other' },
+];
+
+interface LeagueSection {
+    title: string;
+    data: League[];
+}
 
 export const SearchScreen: React.FC = () => {
     const [query, setQuery] = useState('');
     const { isLeagueFavorite, toggleFavoriteLeague } = useFavorites();
+    const navigation = useNavigation<any>();
 
-    const filteredLeagues = query.length > 0
-        ? LEAGUES.filter((l) =>
-            l.name.toLowerCase().includes(query.toLowerCase()) ||
-            l.shortName.toLowerCase().includes(query.toLowerCase()) ||
-            (l.country?.toLowerCase().includes(query.toLowerCase()) ?? false)
-        )
-        : LEAGUES;
+    const navigateToLeague = (slug: string) => {
+        navigation.navigate('Standings', { leagueSlug: slug });
+    };
 
-    // Sort favorites first
-    const sortedLeagues = [...filteredLeagues].sort((a, b) => {
-        const aFav = isLeagueFavorite(a.slug) ? 0 : 1;
-        const bFav = isLeagueFavorite(b.slug) ? 0 : 1;
-        return aFav - bFav;
-    });
+    const sections = useMemo((): LeagueSection[] => {
+        const filtered = query.length > 0
+            ? LEAGUES.filter((l) =>
+                l.name.toLowerCase().includes(query.toLowerCase()) ||
+                l.shortName.toLowerCase().includes(query.toLowerCase()) ||
+                (l.country?.toLowerCase().includes(query.toLowerCase()) ?? false)
+            )
+            : LEAGUES;
+
+        // If searching, show flat results
+        if (query.length > 0) {
+            const sorted = [...filtered].sort((a, b) => {
+                const aFav = isLeagueFavorite(a.slug) ? 0 : 1;
+                const bFav = isLeagueFavorite(b.slug) ? 0 : 1;
+                return aFav - bFav;
+            });
+            return [{ title: `Results (${sorted.length})`, data: sorted }];
+        }
+
+        // Favorites section
+        const favorites = LEAGUES.filter((l) => isLeagueFavorite(l.slug));
+        const result: LeagueSection[] = [];
+
+        if (favorites.length > 0) {
+            result.push({ title: '⭐ Favorites', data: favorites });
+        }
+
+        // Grouped by region
+        for (const { region, label } of REGION_LABELS) {
+            const leagues = getLeaguesByRegion(region);
+            if (leagues.length > 0) {
+                result.push({ title: label, data: leagues });
+            }
+        }
+
+        return result;
+    }, [query, isLeagueFavorite]);
 
     return (
         <View style={styles.container}>
@@ -49,9 +89,14 @@ export const SearchScreen: React.FC = () => {
                 )}
             </View>
 
-            <FlatList
-                data={sortedLeagues}
+            <SectionList
+                sections={sections}
                 keyExtractor={(item) => item.slug}
+                renderSectionHeader={({ section }) => (
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>{section.title}</Text>
+                    </View>
+                )}
                 renderItem={({ item }) => (
                     <View style={styles.leagueRow}>
                         <TouchableOpacity
@@ -62,19 +107,31 @@ export const SearchScreen: React.FC = () => {
                                 {isLeagueFavorite(item.slug) ? '★' : '☆'}
                             </Text>
                         </TouchableOpacity>
-                        <View style={styles.leagueInfo}>
-                            <Text style={styles.leagueName}>{item.name}</Text>
-                            <Text style={styles.leagueDetail}>
-                                {item.country ? `${item.country} • ` : ''}{item.region}
-                            </Text>
-                        </View>
-                        <View style={styles.badges}>
-                            {item.hasStandings && (
-                                <View style={styles.badge}>
-                                    <Text style={styles.badgeText}>Table</Text>
-                                </View>
-                            )}
-                        </View>
+                        <TouchableOpacity
+                            style={styles.leagueInfoTouchable}
+                            onPress={() => navigateToLeague(item.slug)}
+                            activeOpacity={0.6}
+                        >
+                            <View style={styles.leagueInfo}>
+                                <Text style={styles.leagueName}>{item.name}</Text>
+                                <Text style={styles.leagueDetail}>
+                                    {item.country ? `${item.country} • ` : ''}{item.region}
+                                </Text>
+                            </View>
+                            <View style={styles.badges}>
+                                {item.tier === 1 && (
+                                    <View style={[styles.badge, styles.tierBadge]}>
+                                        <Text style={styles.tierBadgeText}>Top</Text>
+                                    </View>
+                                )}
+                                {item.hasStandings && (
+                                    <View style={styles.badge}>
+                                        <Text style={styles.badgeText}>Table</Text>
+                                    </View>
+                                )}
+                            </View>
+                            <Text style={styles.chevron}>›</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
                 ListEmptyComponent={
@@ -82,6 +139,7 @@ export const SearchScreen: React.FC = () => {
                         <Text style={styles.emptyText}>No leagues found</Text>
                     </View>
                 }
+                stickySectionHeadersEnabled
             />
         </View>
     );
@@ -113,6 +171,18 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: colors.textMuted,
     },
+    sectionHeader: {
+        backgroundColor: colors.background,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    sectionTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: colors.textPrimary,
+    },
     leagueRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -131,6 +201,16 @@ const styles = StyleSheet.create({
     },
     leagueInfo: {
         flex: 1,
+    },
+    leagueInfoTouchable: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    chevron: {
+        fontSize: 20,
+        color: colors.textMuted,
+        marginLeft: 8,
     },
     leagueName: {
         fontSize: 14,
@@ -156,6 +236,14 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '600',
         color: colors.textSecondary,
+    },
+    tierBadge: {
+        backgroundColor: colors.primary + '22',
+    },
+    tierBadgeText: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: colors.primary,
     },
     emptyContainer: {
         paddingTop: 40,

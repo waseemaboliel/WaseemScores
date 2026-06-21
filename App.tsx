@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppNavigator } from './src/navigation';
 import { FavoritesProvider } from './src/stores';
@@ -20,11 +21,13 @@ export default function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <FavoritesProvider>
-        <AppNavigator />
-        <StatusBar style="light" />
-      </FavoritesProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <FavoritesProvider>
+          <AppNavigator />
+          <StatusBar style="light" />
+        </FavoritesProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
