@@ -359,81 +359,109 @@ xcrun simctl list devices available
 
 ---
 
-### Phase 2 — Foundation (Week 1-2)
-- [ ] Project setup (Expo, TypeScript, navigation)
-- [ ] ESPN API client with TanStack Query
-- [ ] Full league registry (all 150+ leagues from API doc)
-- [ ] Type definitions for all API responses
-- [ ] Basic scoreboard screen (today's matches grouped by league)
-- [ ] Basic standings screen (single league table)
-- [ ] Dark theme as default
+### Phase 2 — Foundation ✅ DONE
+- [x] Project setup (Expo SDK 56, TypeScript, React Navigation v7)
+- [x] ESPN API client with TanStack Query
+- [x] League registry (22 leagues — not full 150+ yet)
+- [x] Type definitions for API responses
+- [x] Basic scoreboard screen (today's matches grouped by league)
+- [x] Basic standings screen (single league table)
+- [x] Dark AMOLED theme as default
 
-### Phase 3 — Core Experience (Week 3-4)
-- [ ] Date navigation (horizontal swipeable date picker)
-- [ ] Match detail screen (summary endpoint — events, stats, lineups)
-- [ ] All leagues browsable by region (league hub)
-- [ ] Standings with season picker (all 25 seasons)
-- [ ] Qualification zone colors & relegation bands
-- [ ] Home/Away table views
-- [ ] Form guide (last 5 as W/D/L dots)
-- [ ] Search functionality (teams, leagues)
+### Phase 3 — Completed Features ✅ DONE
+> All items below were implemented across the original phases 3–7.
 
-### Phase 4 — Personalization & Profiles (Week 5-6)
-- [ ] Favorites system (teams + leagues)
-- [ ] "My Scores" personalized tab
+**Core Experience:**
+- [x] Date navigation (horizontal date picker)
+- [x] Match detail screen (events, stats, lineups, H2H)
+- [x] Standings with season picker (all 25 seasons)
+- [x] Search functionality (leagues)
+
+**Personalization:**
+- [x] Favorites system (follow teams + leagues)
+- [x] Pin favorite leagues to top of scoreboard
+- [x] Team profile screen (basic — fixtures, standing, next match)
+
+**Polish & Live Experience:**
+- [x] Smart polling (30s for live matches)
+- [x] Live match indicators & pulsing dot animation
+- [x] Match timeline (key events — goals, cards, subs)
+- [x] Pull-to-refresh
+- [x] Loading skeletons (shimmer effect)
+
+**Statistics:**
+- [x] League top scorers & assists tables (with league picker)
+- [x] Head-to-head history (in match detail screen)
+
+**Notifications:**
+- [x] Local notifications setup (expo-notifications)
+- [x] Goal alerts for followed teams (local, score comparison)
+
+**News:**
+- [x] League news screen with article cards
+
+---
+
+### Phase 4 — Core Experience Gaps
+- [ ] Swipeable gesture date navigation (swipe between days)
+- [ ] All leagues browsable by region (league hub page)
+- [ ] Qualification zone colors & relegation bands in standings
+- [ ] Home/Away table views in standings
+- [ ] Form guide (last 5 matches as W/D/L dots)
+
+### Phase 5 — Personalization & Profiles
+- [ ] "My Scores" personalized tab (only favorites)
 - [ ] "Live" tab (only in-progress matches)
 - [ ] Onboarding flow (pick your teams on first launch)
-- [ ] Team profile screen (squad, stats, fixtures)
-- [ ] Player profile screen (bio, stats)
-- [ ] Persistent storage (MMKV)
-- [ ] Settings screen (full)
+- [ ] Player profile screen (bio, stats, career)
+- [ ] Full settings screen (theme, notifications, time format, spoiler mode)
+- [ ] Persistent storage migration (AsyncStorage → MMKV)
+- [ ] Full team profile (squad roster, player photos, team stats, transfer history)
 
-### Phase 5 — Polish & Live Experience (Week 7-8)
-- [ ] Smart polling (30s live, 5min recent, 4hr idle)
-- [ ] Live match indicators & pulsing animations
-- [ ] Score flash on goal
-- [ ] Match timeline (minute-by-minute events)
-- [ ] Lineups visual pitch layout
-- [ ] Pull-to-refresh
-- [ ] Loading skeletons
-- [ ] Empty states & error handling
-- [ ] Spoiler mode (hide scores)
+### Phase 6 — Polish & Animations
+- [ ] Score flash animation on goal
+- [ ] Lineups visual pitch layout (formation view)
+- [ ] Spoiler mode (hide scores until tap)
+- [ ] Comprehensive empty states & error handling
+- [ ] Match countdown timer for upcoming games
 
-### Phase 6 — Statistics & Comparison (Week 9-10)
-- [ ] League top scorers & assists tables
-- [ ] Points progression chart (line graph)
-- [ ] Team comparison tool (side-by-side)
-- [ ] Head-to-head finder
+### Phase 7 — Statistics & Comparison
+- [ ] Points progression chart (line graph over season)
+- [ ] Team comparison tool (side-by-side stats)
 - [ ] Clean sheet / unbeaten run trackers
 - [ ] Season stats overview per league
-- [ ] Sort standings by any column
+- [ ] Sort standings by any column (tap header)
+- [ ] Goals per matchday chart
 
-### Phase 7 — Notifications & Alerts (Week 11-12)
-- [ ] Local notifications setup
-- [ ] Goal alerts for followed teams
+### Phase 8 — Notifications & Alerts
 - [ ] Match start / halftime / fulltime alerts
 - [ ] Red card alerts
-- [ ] Table position change alerts
-- [ ] Granular settings per team
+- [ ] Table position change alerts ("Your team moved to 3rd!")
+- [ ] Granular notification settings per team
 - [ ] Calendar integration (add match to device calendar)
+- [ ] Lineup announced alert
 
-### Phase 8 — Sharing & Widgets (Week 13-14)
+### Phase 9 — Sharing & Widgets
 - [ ] Share match result as image card
 - [ ] Share standings snapshot
 - [ ] iOS home screen widget (live scores)
 - [ ] Android widget
 - [ ] Lock screen widget (next match countdown)
 
-### Phase 9 — Final Polish (Week 15-16)
+### Phase 10 — Final Polish
 - [ ] Offline mode (full cached data access)
-- [ ] AMOLED black theme
-- [ ] RTL support
+- [ ] RTL support (Arabic)
 - [ ] Accessibility (VoiceOver/TalkBack)
 - [ ] Performance optimization (large lists, memory)
-- [ ] App icon & splash screen
-- [ ] Data saver mode
+- [ ] App icon & splash screen (final design)
+- [ ] Data saver mode (reduce polling frequency)
 - [ ] Comprehensive testing on physical iPhone
 - [ ] Edge cases & bug fixes
+
+---
+
+### Deferred (not planned for the moment)
+- Full league registry (expand from 22 to 150+ leagues)
 
 ---
 
