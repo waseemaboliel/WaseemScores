@@ -2,6 +2,7 @@
   "expo": {
     "name": "WaseemScores",
     "slug": "WaseemScores",
+    "scheme": "waseemscores",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
