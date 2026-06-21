@@ -1,6 +1,9 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ParsedMatch } from '../api';
+import type { ScoresStackParamList } from '../navigation';
 import { colors } from '../constants';
 
 interface MatchCardProps {
@@ -8,12 +11,22 @@ interface MatchCardProps {
 }
 
 export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
+    const navigation = useNavigation<NativeStackNavigationProp<ScoresStackParamList>>();
     const isLive = match.status.state === 'in';
     const isFinished = match.status.state === 'post';
     const isScheduled = match.status.state === 'pre';
 
+    const handlePress = () => {
+        navigation.navigate('MatchDetail', {
+            eventId: match.id,
+            slug: match.league.slug,
+            homeTeam: match.homeTeam.abbreviation || match.homeTeam.name,
+            awayTeam: match.awayTeam.abbreviation || match.awayTeam.name,
+        });
+    };
+
     return (
-        <View style={styles.container}>
+        <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.7}>
             {/* Status */}
             <View style={styles.statusContainer}>
                 {isLive && <View style={styles.liveDot} />}
@@ -59,7 +72,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
                     </Text>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 

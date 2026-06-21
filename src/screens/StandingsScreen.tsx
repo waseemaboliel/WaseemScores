@@ -8,7 +8,7 @@ import {
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
-import { useStandings, useTournamentCalendar, useBracket } from '../hooks';
+import { useStandings, useSeasons, useTournamentCalendar, useBracket } from '../hooks';
 import { StandingsTable, BracketView } from '../components';
 import { colors, LEAGUES } from '../constants';
 import type { League } from '../constants';
@@ -20,9 +20,13 @@ type Tab = 'groups' | 'bracket';
 export const StandingsScreen: React.FC = () => {
     const [selectedLeague, setSelectedLeague] = useState<League>(ALL_LEAGUES[0]);
     const [activeTab, setActiveTab] = useState<Tab>('groups');
+    const [selectedSeason, setSelectedSeason] = useState<number | undefined>(undefined);
+
+    const { data: seasons } = useSeasons(selectedLeague.slug);
 
     const { data, isLoading, isError, refetch, isRefetching } = useStandings(
-        selectedLeague.slug
+        selectedLeague.slug,
+        selectedSeason
     );
 
     const { data: calendarRounds } = useTournamentCalendar(selectedLeague.slug, selectedLeague.hasStandings);
@@ -52,6 +56,7 @@ export const StandingsScreen: React.FC = () => {
                         onPress={() => {
                             setSelectedLeague(league);
                             setActiveTab(league.hasStandings ? 'groups' : 'bracket');
+                            setSelectedSeason(undefined);
                         }}
                     >
                         <Text
@@ -65,6 +70,34 @@ export const StandingsScreen: React.FC = () => {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
+
+            {/* Season Picker */}
+            {selectedLeague.hasStandings && seasons && seasons.length > 1 && (
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.seasonPicker}
+                    contentContainerStyle={styles.seasonPickerContent}
+                >
+                    {seasons.map((season: any) => (
+                        <TouchableOpacity
+                            key={season.year}
+                            style={[
+                                styles.seasonChip,
+                                (selectedSeason === season.year || (!selectedSeason && seasons[0].year === season.year)) && styles.seasonChipActive,
+                            ]}
+                            onPress={() => setSelectedSeason(season.year === seasons[0].year ? undefined : season.year)}
+                        >
+                            <Text style={[
+                                styles.seasonText,
+                                (selectedSeason === season.year || (!selectedSeason && seasons[0].year === season.year)) && styles.seasonTextActive,
+                            ]}>
+                                {season.displayName || season.year}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            )}
 
             {/* Groups / Bracket Toggle */}
             {(hasKnockouts || !selectedLeague.hasStandings) && (
@@ -184,6 +217,33 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
     },
     leagueChipTextActive: {
+        color: colors.textPrimary,
+    },
+    seasonPicker: {
+        maxHeight: 40,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    seasonPickerContent: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        gap: 6,
+    },
+    seasonChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 14,
+        backgroundColor: colors.surfaceLight,
+    },
+    seasonChipActive: {
+        backgroundColor: colors.accent,
+    },
+    seasonText: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: colors.textMuted,
+    },
+    seasonTextActive: {
         color: colors.textPrimary,
     },
     tabBar: {

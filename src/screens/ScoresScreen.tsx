@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,8 @@ import {
     StyleSheet,
     ActivityIndicator,
     RefreshControl,
+    TouchableOpacity,
+    ScrollView,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { espnApi } from '../api';
@@ -18,6 +20,36 @@ interface LeagueSection {
     name: string;
     matches: ParsedMatch[];
 }
+
+// Generate dates array: ±7 days from today
+const generateDates = (): { key: string; label: string; dayLabel: string; date: Date }[] => {
+    const dates: { key: string; label: string; dayLabel: string; date: Date }[] = [];
+    const today = new Date();
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    for (let i = -7; i <= 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const key = `${y}${m}${day}`;
+        const dayLabel = i === 0 ? 'Today' : i === -1 ? 'Yesterday' : i === 1 ? 'Tomorrow' : dayNames[d.getDay()];
+        const label = `${d.getDate()} ${d.toLocaleString('en', { month: 'short' })}`;
+        dates.push({ key, label, dayLabel, date: d });
+    }
+    return dates;
+};
+
+const DATES = generateDates();
+const TODAY_INDEX = 7; // index of today in the 15-day array
+
+const formatDateKey = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}${m}${d}`;
+};
 
 const parseMatches = (data: ScoreboardResponse, slug: string): ParsedMatch[] => {
     const league = data.leagues?.[0];
@@ -58,10 +90,10 @@ const parseMatches = (data: ScoreboardResponse, slug: string): ParsedMatch[] => 
     );
 };
 
-const fetchAllScoreboards = async (): Promise<LeagueSection[]> => {
+const fetchAllScoreboards = async (dateKey: string): Promise<LeagueSection[]> => {
     const results = await Promise.allSettled(
         DEFAULT_SCOREBOARD_LEAGUES.map(async (slug) => {
-            const data = await espnApi.getScoreboard(slug);
+            const data = await espnApi.getScoreboard(slug, dateKey);
             const matches = parseMatches(data, slug);
             return {
                 slug,
@@ -98,69 +130,158 @@ const fetchAllScoreboards = async (): Promise<LeagueSection[]> => {
 };
 
 export const ScoresScreen: React.FC = () => {
+    const [selectedDateIndex, setSelectedDateIndex] = useState(TODAY_INDEX);
+    const dateScrollRef = useRef<ScrollView>(null);
+    const selectedDate = DATES[selectedDateIndex];
+
     const { data, isLoading, isError, refetch, isRefetching } = useQuery({
-        queryKey: ['scoreboard', 'all'],
-        queryFn: fetchAllScoreboards,
-        staleTime: 5 * 60 * 1000,
+        queryKey: ['scoreboard', 'all', selectedDate.key],
+        queryFn: () => fetchAllScoreboards(selectedDate.key),
+        staleTime: selectedDateIndex === TODAY_INDEX ? 30 * 1000 : 5 * 60 * 1000,
     });
 
-    if (isLoading) {
-        return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading scores...</Text>
-            </View>
-        );
-    }
+    const renderContent = () => {
+        if (isLoading) {
+            return (
+                <View style={styles.centered}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading scores...</Text>
+                </View>
+            );
+        }
 
-    if (isError) {
-        return (
-            <View style={styles.centered}>
-                <Text style={styles.errorText}>Failed to load scores</Text>
-                <Text style={styles.retryText} onPress={() => refetch()}>
-                    Tap to retry
-                </Text>
-            </View>
-        );
-    }
+        if (isError) {
+            return (
+                <View style={styles.centered}>
+                    <Text style={styles.errorText}>Failed to load scores</Text>
+                    <Text style={styles.retryText} onPress={() => refetch()}>
+                        Tap to retry
+                    </Text>
+                </View>
+            );
+        }
 
-    if (!data || data.length === 0) {
+        if (!data || data.length === 0) {
+            return (
+                <View style={styles.centered}>
+                    <Text style={styles.emptyText}>No matches</Text>
+                    <Text style={styles.emptySubtext}>No fixtures scheduled for this day</Text>
+                </View>
+            );
+        }
+
         return (
-            <View style={styles.centered}>
-                <Text style={styles.emptyText}>No matches today</Text>
-                <Text style={styles.emptySubtext}>Check back later for upcoming fixtures</Text>
-            </View>
+            <FlatList
+                style={styles.list}
+                data={data}
+                keyExtractor={(item) => item.slug}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={refetch}
+                        tintColor={colors.primary}
+                    />
+                }
+                renderItem={({ item: section }) => (
+                    <View style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>{section.name}</Text>
+                            <Text style={styles.matchCount}>{section.matches.length}</Text>
+                        </View>
+                        {section.matches.map((match) => (
+                            <MatchCard key={match.id} match={match} />
+                        ))}
+                    </View>
+                )}
+            />
         );
-    }
+    };
 
     return (
-        <FlatList
-            style={styles.list}
-            data={data}
-            keyExtractor={(item) => item.slug}
-            refreshControl={
-                <RefreshControl
-                    refreshing={isRefetching}
-                    onRefresh={refetch}
-                    tintColor={colors.primary}
-                />
-            }
-            renderItem={({ item: section }) => (
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>{section.name}</Text>
-                        <Text style={styles.matchCount}>{section.matches.length}</Text>
-                    </View>
-                    {section.matches.map((match) => (
-                        <MatchCard key={match.id} match={match} />
-                    ))}
-                </View>
-            )}
-        />
+        <View style={styles.container}>
+            {/* Date Picker */}
+            <ScrollView
+                ref={dateScrollRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.datePicker}
+                contentContainerStyle={styles.datePickerContent}
+                contentOffset={{ x: Math.max(0, (TODAY_INDEX - 2) * 64), y: 0 }}
+            >
+                {DATES.map((item, index) => (
+                    <TouchableOpacity
+                        key={item.key}
+                        style={[
+                            styles.dateItem,
+                            index === selectedDateIndex && styles.dateItemActive,
+                        ]}
+                        onPress={() => setSelectedDateIndex(index)}
+                    >
+                        <Text style={[
+                            styles.dateDayLabel,
+                            index === selectedDateIndex && styles.dateLabelActive,
+                            index === TODAY_INDEX && index !== selectedDateIndex && styles.dateTodayText,
+                        ]}>
+                            {item.dayLabel}
+                        </Text>
+                        <Text style={[
+                            styles.dateLabel,
+                            index === selectedDateIndex && styles.dateLabelActive,
+                        ]}>
+                            {item.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+
+            {/* Content */}
+            {renderContent()}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: colors.background,
+    },
+    datePicker: {
+        maxHeight: 64,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    datePickerContent: {
+        paddingHorizontal: 8,
+        alignItems: 'center',
+    },
+    dateItem: {
+        width: 56,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        marginHorizontal: 4,
+        borderRadius: 12,
+    },
+    dateItemActive: {
+        backgroundColor: colors.primary,
+    },
+    dateDayLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: colors.textMuted,
+        marginBottom: 2,
+    },
+    dateLabel: {
+        fontSize: 12,
+        color: colors.textSecondary,
+        fontWeight: '500',
+    },
+    dateLabelActive: {
+        color: colors.textPrimary,
+    },
+    dateTodayText: {
+        color: colors.primary,
+    },
     list: {
         flex: 1,
         backgroundColor: colors.background,

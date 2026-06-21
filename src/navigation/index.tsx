@@ -1,7 +1,8 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ScoresScreen, StandingsScreen } from '../screens';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { ScoresScreen, StandingsScreen, MatchDetailScreen, SearchScreen } from '../screens';
 import { colors } from '../constants';
 
 const DarkTheme = {
@@ -18,23 +19,45 @@ const DarkTheme = {
     },
 };
 
+export type ScoresStackParamList = {
+    ScoresList: undefined;
+    MatchDetail: {
+        eventId: string;
+        slug: string;
+        homeTeam: string;
+        awayTeam: string;
+    };
+};
+
+const Stack = createNativeStackNavigator<ScoresStackParamList>();
 const Tab = createBottomTabNavigator();
+
+const ScoresStack: React.FC = () => (
+    <Stack.Navigator
+        screenOptions={{
+            headerStyle: { backgroundColor: colors.surface },
+            headerTintColor: colors.textPrimary,
+            headerTitleStyle: { fontWeight: '700', fontSize: 16 },
+            headerShadowVisible: false,
+        }}
+    >
+        <Stack.Screen name="ScoresList" component={ScoresScreen} options={{ title: 'Scores' }} />
+        <Stack.Screen
+            name="MatchDetail"
+            component={MatchDetailScreen}
+            options={({ route }) => ({
+                title: `${route.params.homeTeam} vs ${route.params.awayTeam}`,
+            })}
+        />
+    </Stack.Navigator>
+);
 
 export const AppNavigator: React.FC = () => {
     return (
         <NavigationContainer theme={DarkTheme}>
             <Tab.Navigator
                 screenOptions={{
-                    headerStyle: {
-                        backgroundColor: colors.surface,
-                        shadowColor: 'transparent',
-                        elevation: 0,
-                    },
-                    headerTintColor: colors.textPrimary,
-                    headerTitleStyle: {
-                        fontWeight: '700',
-                        fontSize: 18,
-                    },
+                    headerShown: false,
                     tabBarStyle: {
                         backgroundColor: colors.surface,
                         borderTopColor: colors.border,
@@ -50,9 +73,8 @@ export const AppNavigator: React.FC = () => {
             >
                 <Tab.Screen
                     name="Scores"
-                    component={ScoresScreen}
+                    component={ScoresStack}
                     options={{
-                        title: 'Scores',
                         tabBarLabel: 'Scores',
                     }}
                 />
@@ -62,6 +84,34 @@ export const AppNavigator: React.FC = () => {
                     options={{
                         title: 'Standings',
                         tabBarLabel: 'Standings',
+                        headerShown: true,
+                        headerStyle: {
+                            backgroundColor: colors.surface,
+                        },
+                        headerTintColor: colors.textPrimary,
+                        headerTitleStyle: {
+                            fontWeight: '700',
+                            fontSize: 18,
+                        },
+                        headerShadowVisible: false,
+                    }}
+                />
+                <Tab.Screen
+                    name="Search"
+                    component={SearchScreen}
+                    options={{
+                        title: 'Leagues',
+                        tabBarLabel: 'Leagues',
+                        headerShown: true,
+                        headerStyle: {
+                            backgroundColor: colors.surface,
+                        },
+                        headerTintColor: colors.textPrimary,
+                        headerTitleStyle: {
+                            fontWeight: '700',
+                            fontSize: 18,
+                        },
+                        headerShadowVisible: false,
                     }}
                 />
             </Tab.Navigator>
