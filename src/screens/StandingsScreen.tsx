@@ -8,7 +8,7 @@ import {
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
-import { useStandings, useSeasons, useTournamentCalendar, useBracket } from '../hooks';
+import { useStandings, useSeasons, useTournamentCalendar, useBracket, useSeasonBracket } from '../hooks';
 import { StandingsTable, BracketView } from '../components';
 import { colors, LEAGUES } from '../constants';
 import type { League } from '../constants';
@@ -24,18 +24,34 @@ export const StandingsScreen: React.FC = () => {
 
     const { data: seasons } = useSeasons(selectedLeague.slug);
 
+    // Determine if we're viewing a historical season
+    const currentSeasonYear = seasons?.[0]?.year;
+    const isHistoricalSeason = selectedSeason !== undefined && selectedSeason !== currentSeasonYear;
+    const selectedSeasonData = seasons?.find((s: any) => s.year === selectedSeason);
+
     const { data, isLoading, isError, refetch, isRefetching } = useStandings(
         selectedLeague.slug,
         selectedSeason
     );
 
+    // Current season: use calendar-based bracket
     const { data: calendarRounds } = useTournamentCalendar(selectedLeague.slug, selectedLeague.hasStandings);
-    const hasKnockouts = (calendarRounds?.length ?? 0) > 0;
-
-    const { data: bracketData, isLoading: bracketLoading } = useBracket(
+    const { data: currentBracketData, isLoading: currentBracketLoading } = useBracket(
         selectedLeague.slug,
-        activeTab === 'bracket' && calendarRounds ? calendarRounds : []
+        activeTab === 'bracket' && !isHistoricalSeason && calendarRounds ? calendarRounds : []
     );
+
+    // Historical season: use date-range-based bracket
+    const { data: historicalBracketData, isLoading: historicalBracketLoading } = useSeasonBracket(
+        selectedLeague.slug,
+        isHistoricalSeason && activeTab === 'bracket' ? selectedSeasonData?.startDate : undefined,
+        isHistoricalSeason && activeTab === 'bracket' ? selectedSeasonData?.endDate : undefined,
+        selectedLeague.hasStandings
+    );
+
+    const hasKnockouts = (calendarRounds?.length ?? 0) > 0 || !selectedLeague.hasStandings;
+    const bracketData = isHistoricalSeason ? historicalBracketData : currentBracketData;
+    const bracketLoading = isHistoricalSeason ? historicalBracketLoading : currentBracketLoading;
 
     return (
         <View style={styles.container}>

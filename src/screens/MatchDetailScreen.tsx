@@ -116,10 +116,10 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
                             <View style={styles.eventIconContainer}>
                                 <Text style={styles.eventIcon}>
                                     {event.type?.text?.toLowerCase().includes('goal') ? '⚽' :
-                                     event.type?.text?.toLowerCase().includes('yellow') ? '🟨' :
-                                     event.type?.text?.toLowerCase().includes('red') ? '🟥' :
-                                     event.type?.text?.toLowerCase().includes('substitution') ? '🔄' :
-                                     event.type?.text?.toLowerCase().includes('penalty') ? '⚽' : '•'}
+                                        event.type?.text?.toLowerCase().includes('yellow') ? '🟨' :
+                                            event.type?.text?.toLowerCase().includes('red') ? '🟥' :
+                                                event.type?.text?.toLowerCase().includes('substitution') ? '🔄' :
+                                                    event.type?.text?.toLowerCase().includes('penalty') ? '⚽' : '•'}
                                 </Text>
                             </View>
                             <Text style={styles.eventText} numberOfLines={2}>{event.text}</Text>

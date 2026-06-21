@@ -48,7 +48,7 @@ const formatDate = (isoDate: string): string => {
     return `${y}${m}${day}`;
 };
 
-/** Fetches the tournament calendar (rounds) for a given league */
+/** Fetches the tournament calendar (rounds) for the current season */
 export const useTournamentCalendar = (slug: string, hasGroupStage: boolean = true) => {
     return useQuery({
         queryKey: ['calendar', slug],
@@ -60,8 +60,6 @@ export const useTournamentCalendar = (slug: string, hasGroupStage: boolean = tru
             for (const section of calendar) {
                 if (section.entries) {
                     for (const entry of section.entries) {
-                        // For tournaments with group stages, skip value=1 (group round)
-                        // For cups, include all rounds
                         if (!hasGroupStage || entry.value !== '1') {
                             entries.push(entry);
                         }
@@ -74,7 +72,7 @@ export const useTournamentCalendar = (slug: string, hasGroupStage: boolean = tru
     });
 };
 
-/** Fetches bracket matches for all knockout rounds */
+/** Fetches bracket matches for all knockout rounds using calendar entries */
 export const useBracket = (slug: string, rounds: CalendarEntry[]) => {
     return useQuery({
         queryKey: ['bracket', slug, rounds.map((r) => r.value).join(',')],
@@ -99,5 +97,45 @@ export const useBracket = (slug: string, rounds: CalendarEntry[]) => {
         },
         enabled: rounds.length > 0,
         staleTime: 5 * 60 * 1000,
+    });
+};
+
+/**
+ * Fetches bracket for a historical season by its date range.
+ * Groups matches by competition round notes or date clusters.
+ */
+export const useSeasonBracket = (slug: string, seasonStart?: string, seasonEnd?: string, hasGroupStage: boolean = true) => {
+    return useQuery({
+        queryKey: ['seasonBracket', slug, seasonStart, seasonEnd],
+        queryFn: async (): Promise<BracketRound[]> => {
+            if (!seasonStart || !seasonEnd) return [];
+            const startDate = formatDate(seasonStart);
+            const endDate = formatDate(seasonEnd);
+            const data = await espnApi.getScoreboardByDateRange(slug, startDate, endDate);
+            const allMatches = parseMatchesFromEvents(data.events ?? [], slug);
+
+            // Group matches by their competition type/round note
+            const roundMap = new Map<string, ParsedMatch[]>();
+            for (const match of allMatches) {
+                // Use the note (e.g. "1st Leg", "2nd Leg - X advance") or status
+                // For group stage matches (no note), label them "Group Stage"
+                const label = match.note || 'Group Stage';
+                if (!roundMap.has(label)) {
+                    roundMap.set(label, []);
+                }
+                roundMap.get(label)!.push(match);
+            }
+
+            // Convert to BracketRound array, filter out group stage if needed
+            const rounds: BracketRound[] = [];
+            let i = 0;
+            for (const [label, matches] of roundMap) {
+                if (hasGroupStage && label === 'Group Stage') continue;
+                rounds.push({ label, value: String(i++), matches });
+            }
+            return rounds;
+        },
+        enabled: !!seasonStart && !!seasonEnd,
+        staleTime: 24 * 60 * 60 * 1000, // Historical data doesn't change
     });
 };
