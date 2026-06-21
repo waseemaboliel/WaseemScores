@@ -458,3 +458,69 @@ src/
 - **Home/Away table views**: ESPN standings API does not provide home/away splits
 - **Form guide (W/D/L dots)**: ESPN standings API has no form data; scoreboard has `competitor.form` but only for teams with matches on that day — insufficient for full table
 
+---
+
+## Phase 5 — Personalization & Profiles (2026-06-22)
+
+### 5.1 My Scores & Live Filters
+- **File**: `src/screens/ScoresScreen.tsx`
+- Added filter chips: All | ★ My Scores | ● Live
+- "My Scores" shows matches from favorite leagues + matches involving favorite teams
+- "Live" shows only in-progress matches
+- Contextual empty states per filter
+- Settings gear icon in Scores header → navigates to Settings
+
+### 5.2 Settings Screen
+- **File**: `src/screens/SettingsScreen.tsx`
+- Time format toggle (12h/24h)
+- Spoiler mode toggle
+- Notification toggles: master, goal alerts, match start alerts
+- Expandable favorites management: tap to reveal list, "Remove" button per item
+- About section (version, data source)
+
+### 5.3 Full Team Profile
+- **File**: `src/screens/TeamDetailScreen.tsx`
+- Three-tab layout: Overview | Squad | Fixtures
+- Overview: season stats grid (Played/W/D/L/GF/GA), next match, coach info
+- Squad: roster grouped by position (GK/DEF/MID/FWD), player photo, jersey, nationality, age
+- Fixtures: expanded to 20 matches, tappable to match detail
+- Roster fetches without season first, falls back to season=2024 if empty
+- Each player row tappable → navigates to PlayerProfile
+
+### 5.4 Player Profile Screen
+- **File**: `src/screens/PlayerProfileScreen.tsx`
+- ESPN APIs: `athletes/{id}` (bio) + `athletes/{id}/overview` (stats, game log)
+- Headshot from ESPN CDN pattern
+- Bio card: age, height, weight, nationality, birthplace
+- Season stats table with per-competition splits (labels: STRT/FC/FA/YC/RC/G/A/SHOT/SOG)
+- Recent game log with goals and assists per match
+
+### 5.5 Onboarding Flow
+- **File**: `src/screens/OnboardingScreen.tsx`
+- Two-step flow: Pick Leagues → Pick Teams
+- 16 popular teams pre-configured (EPL, La Liga, Bundesliga, Serie A, Ligue 1)
+- Uses `SafeAreaView` from `react-native-safe-area-context`
+- Skip option available; completion stored via MMKV
+- Shows on first launch only, controlled by `SettingsContext.onboardingComplete`
+
+### 5.6 MMKV Storage Migration
+- **New dep**: `react-native-mmkv` (native module, required rebuild)
+- **File**: `src/stores/storage.ts` — storage abstraction with `mmkvStorage` helpers
+- One-time migration from AsyncStorage on app startup (`migrateFromAsyncStorage`)
+- `FavoritesContext` and `SettingsContext` now use synchronous MMKV reads (no loading flash)
+- Storage instance ID: `waseem-scores`
+
+### 5.7 Navigation Updates
+- `ScoresStackParamList` expanded: `PlayerProfile`, `Settings` routes added
+- Onboarding shown before main navigator when `onboardingComplete === false`
+- `SettingsProvider` wraps app in `App.tsx`
+
+### 5.8 API Additions
+- `teamRoster(slug, teamId, season?)` — Team roster endpoint
+- `athleteOverview(slug, athleteId)` — Player stats/game log
+- `athleteInfo(slug, athleteId)` — Player bio/team info
+
+### 5.9 Notes
+- All features pass `npx tsc --noEmit` with 0 errors
+- Native rebuild required for MMKV: `npx expo prebuild --clean && npx expo run:ios`
+

@@ -32,6 +32,15 @@ export const espnApi = {
     getTeamSchedule: (slug: string, teamId: string) =>
         fetchJson<any>(endpoints.teamSchedule(slug, teamId)),
 
+    getTeamRoster: (slug: string, teamId: string, season?: number) =>
+        fetchJson<any>(endpoints.teamRoster(slug, teamId, season)),
+
+    getAthleteOverview: (slug: string, athleteId: string) =>
+        fetchJson<any>(endpoints.athleteOverview(slug, athleteId)),
+
+    getAthleteInfo: (slug: string, athleteId: string) =>
+        fetchJson<any>(endpoints.athleteInfo(slug, athleteId)),
+
     getLeagueStatistics: (slug: string, season?: number) =>
         fetchJson<any>(endpoints.leagueStatistics(slug, season)),
 

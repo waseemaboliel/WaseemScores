@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, useCallback } from 'react';
+import React, { useRef, useState, useMemo, useCallback, useLayoutEffect } from 'react';
 import {
     View,
     Text,
@@ -13,12 +13,15 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { espnApi } from '../api';
 import type { ParsedMatch, ScoreboardResponse } from '../api';
 import { MatchCard, ScoresSkeleton } from '../components';
 import { colors, DEFAULT_SCOREBOARD_LEAGUES, getLeagueBySlug } from '../constants';
 import { useFavorites } from '../stores';
 import { useGoalNotifications } from '../hooks/useGoalNotifications';
+import type { ScoresStackParamList } from '../navigation';
 
 interface LeagueSection {
     slug: string;
@@ -134,11 +137,25 @@ const fetchAllScoreboards = async (dateKey: string): Promise<LeagueSection[]> =>
     return sections;
 };
 
+type ScoreFilter = 'all' | 'my' | 'live';
+
 export const ScoresScreen: React.FC = () => {
     const [selectedDateIndex, setSelectedDateIndex] = useState(TODAY_INDEX);
+    const [filter, setFilter] = useState<ScoreFilter>('all');
     const dateScrollRef = useRef<ScrollView>(null);
     const selectedDate = DATES[selectedDateIndex];
-    const { favoriteLeagues } = useFavorites();
+    const { favoriteLeagues, favoriteTeams } = useFavorites();
+    const navigation = useNavigation<NativeStackNavigationProp<ScoresStackParamList>>();
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ padding: 8 }}>
+                    <Text style={{ fontSize: 20, color: colors.textMuted }}>⚙</Text>
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation]);
 
     const goToPrevDay = useCallback(() => {
         setSelectedDateIndex((prev) => Math.max(0, prev - 1));
@@ -181,10 +198,38 @@ export const ScoresScreen: React.FC = () => {
         return aLive - bLive;
     }) : data;
 
+    // Apply filter
+    const filteredData = useMemo(() => {
+        if (!sortedData) return sortedData;
+        if (filter === 'all') return sortedData;
+
+        if (filter === 'live') {
+            return sortedData
+                .map((section) => ({
+                    ...section,
+                    matches: section.matches.filter((m) => m.status.state === 'in'),
+                }))
+                .filter((section) => section.matches.length > 0);
+        }
+
+        // 'my' filter — favorite leagues or teams
+        return sortedData
+            .map((section) => {
+                const isFavLeague = favoriteLeagues.includes(section.slug);
+                if (isFavLeague) return section;
+                // Filter to only matches involving favorite teams
+                const favMatches = section.matches.filter(
+                    (m) => favoriteTeams.includes(m.homeTeam.id) || favoriteTeams.includes(m.awayTeam.id),
+                );
+                return { ...section, matches: favMatches };
+            })
+            .filter((section) => section.matches.length > 0);
+    }, [sortedData, filter, favoriteLeagues, favoriteTeams]);
+
     // Goal notifications for favorite teams
     const allMatches = useMemo(
-        () => sortedData?.flatMap((s) => s.matches) ?? [],
-        [sortedData],
+        () => filteredData?.flatMap((s) => s.matches) ?? [],
+        [filteredData],
     );
     useGoalNotifications(allMatches);
 
@@ -204,11 +249,22 @@ export const ScoresScreen: React.FC = () => {
             );
         }
 
-        if (!data || data.length === 0) {
+        if (!filteredData || filteredData.length === 0) {
+            const emptyMessage = filter === 'my'
+                ? 'No matches for your favorites'
+                : filter === 'live'
+                    ? 'No live matches right now'
+                    : 'No matches';
+            const emptySubtext = filter === 'my'
+                ? 'Star leagues and teams to see them here'
+                : filter === 'live'
+                    ? 'Check back when matches are in progress'
+                    : 'No fixtures scheduled for this day';
+
             return (
                 <View style={styles.centered}>
-                    <Text style={styles.emptyText}>No matches</Text>
-                    <Text style={styles.emptySubtext}>No fixtures scheduled for this day</Text>
+                    <Text style={styles.emptyText}>{emptyMessage}</Text>
+                    <Text style={styles.emptySubtext}>{emptySubtext}</Text>
                 </View>
             );
         }
@@ -216,7 +272,7 @@ export const ScoresScreen: React.FC = () => {
         return (
             <FlatList
                 style={styles.list}
-                data={sortedData}
+                data={filteredData}
                 keyExtractor={(item) => item.slug}
                 refreshControl={
                     <RefreshControl
@@ -277,6 +333,29 @@ export const ScoresScreen: React.FC = () => {
                 ))}
             </ScrollView>
 
+            {/* Filter Chips */}
+            <View style={styles.filterRow}>
+                {([
+                    { key: 'all', label: 'All' },
+                    { key: 'my', label: '★ My Scores' },
+                    { key: 'live', label: '● Live' },
+                ] as const).map((f) => (
+                    <TouchableOpacity
+                        key={f.key}
+                        style={[styles.filterChip, filter === f.key && styles.filterChipActive]}
+                        onPress={() => setFilter(f.key)}
+                    >
+                        <Text style={[
+                            styles.filterChipText,
+                            filter === f.key && styles.filterChipTextActive,
+                            f.key === 'live' && filter === f.key && { color: colors.live },
+                        ]}>
+                            {f.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
             {/* Content — swipeable */}
             <GestureDetector gesture={swipeGesture}>
                 <Animated.View style={{ flex: 1 }}>
@@ -327,6 +406,33 @@ const styles = StyleSheet.create({
         color: colors.textPrimary,
     },
     dateTodayText: {
+        color: colors.primary,
+    },
+    filterRow: {
+        flexDirection: 'row',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        gap: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    filterChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 16,
+        backgroundColor: colors.surfaceLight,
+    },
+    filterChipActive: {
+        backgroundColor: colors.primary + '22',
+        borderWidth: 1,
+        borderColor: colors.primary,
+    },
+    filterChipText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: colors.textMuted,
+    },
+    filterChipTextActive: {
         color: colors.primary,
     },
     list: {

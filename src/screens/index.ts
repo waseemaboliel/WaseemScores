@@ -5,3 +5,6 @@ export { SearchScreen } from './SearchScreen';
 export { TeamDetailScreen } from './TeamDetailScreen';
 export { TopScorersScreen } from './TopScorersScreen';
 export { NewsScreen } from './NewsScreen';
+export { SettingsScreen } from './SettingsScreen';
+export { PlayerProfileScreen } from './PlayerProfileScreen';
+export { OnboardingScreen } from './OnboardingScreen';

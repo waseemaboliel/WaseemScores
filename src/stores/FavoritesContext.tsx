@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { mmkvStorage } from './storage';
 
 const STORAGE_KEY = '@favorites';
 
@@ -29,22 +29,9 @@ interface FavoritesState {
 }
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [state, setState] = useState<FavoritesState>({ leagues: [], teams: [] });
-
-    useEffect(() => {
-        AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-            if (raw) {
-                try {
-                    setState(JSON.parse(raw));
-                } catch { }
-            }
-        });
-    }, []);
-
-    const persist = useCallback((newState: FavoritesState) => {
-        setState(newState);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-    }, []);
+    const [state, setState] = useState<FavoritesState>(() => {
+        return mmkvStorage.getObject<FavoritesState>(STORAGE_KEY) ?? { leagues: [], teams: [] };
+    });
 
     const toggleFavoriteLeague = useCallback((slug: string) => {
         setState((prev) => {
@@ -52,7 +39,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? prev.leagues.filter((s) => s !== slug)
                 : [...prev.leagues, slug];
             const newState = { ...prev, leagues };
-            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+            mmkvStorage.setObject(STORAGE_KEY, newState);
             return newState;
         });
     }, []);
@@ -63,7 +50,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 ? prev.teams.filter((t) => t !== teamId)
                 : [...prev.teams, teamId];
             const newState = { ...prev, teams };
-            AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+            mmkvStorage.setObject(STORAGE_KEY, newState);
             return newState;
         });
     }, []);

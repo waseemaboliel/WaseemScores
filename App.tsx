@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppNavigator } from './src/navigation';
-import { FavoritesProvider } from './src/stores';
+import { FavoritesProvider, SettingsProvider, migrateFromAsyncStorage } from './src/stores';
 import { registerForPushNotifications } from './src/services/notifications';
 
 const queryClient = new QueryClient({
@@ -17,16 +17,19 @@ const queryClient = new QueryClient({
 
 export default function App() {
   useEffect(() => {
+    migrateFromAsyncStorage();
     registerForPushNotifications();
   }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <FavoritesProvider>
-          <AppNavigator />
-          <StatusBar style="light" />
-        </FavoritesProvider>
+        <SettingsProvider>
+          <FavoritesProvider>
+            <AppNavigator />
+            <StatusBar style="light" />
+          </FavoritesProvider>
+        </SettingsProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

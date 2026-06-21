@@ -10,8 +10,12 @@ import {
     TeamDetailScreen,
     TopScorersScreen,
     NewsScreen,
+    SettingsScreen,
+    PlayerProfileScreen,
+    OnboardingScreen,
 } from '../screens';
 import { colors } from '../constants';
+import { useSettings } from '../stores';
 
 const DarkTheme = {
     ...DefaultTheme,
@@ -40,6 +44,12 @@ export type ScoresStackParamList = {
         slug: string;
         teamName: string;
     };
+    PlayerProfile: {
+        playerId: string;
+        playerName: string;
+        slug: string;
+    };
+    Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<ScoresStackParamList>();
@@ -69,10 +79,32 @@ const ScoresStack: React.FC = () => (
                 title: route.params.teamName,
             })}
         />
+        <Stack.Screen
+            name="PlayerProfile"
+            component={PlayerProfileScreen}
+            options={({ route }) => ({
+                title: route.params.playerName,
+            })}
+        />
+        <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ title: 'Settings' }}
+        />
     </Stack.Navigator>
 );
 
 export const AppNavigator: React.FC = () => {
+    const { onboardingComplete } = useSettings();
+
+    if (!onboardingComplete) {
+        return (
+            <NavigationContainer theme={DarkTheme}>
+                <OnboardingScreen />
+            </NavigationContainer>
+        );
+    }
+
     return (
         <NavigationContainer theme={DarkTheme}>
             <Tab.Navigator

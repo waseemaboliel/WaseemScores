@@ -32,6 +32,19 @@ export const endpoints = {
         return `${ESPN_BASE}/${slug}/teams/${teamId}/schedule`;
     },
 
+    teamRoster: (slug: string, teamId: string, season?: number) => {
+        const base = `${ESPN_BASE}/${slug}/teams/${teamId}/roster`;
+        return season ? `${base}?season=${season}` : base;
+    },
+
+    athleteOverview: (slug: string, athleteId: string) => {
+        return `https://site.api.espn.com/apis/common/v3/sports/soccer/${slug}/athletes/${athleteId}/overview`;
+    },
+
+    athleteInfo: (slug: string, athleteId: string) => {
+        return `https://site.web.api.espn.com/apis/common/v3/sports/soccer/${slug}/athletes/${athleteId}`;
+    },
+
     leagueStatistics: (slug: string, season?: number) => {
         const base = `${ESPN_BASE}/${slug}/statistics`;
         return season ? `${base}?season=${season}` : base;

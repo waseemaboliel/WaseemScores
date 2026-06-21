@@ -411,14 +411,13 @@ xcrun simctl list devices available
 - ~~Home/Away table views~~ (removed — ESPN API doesn't provide home/away splits)
 - ~~Form guide (W/D/L dots)~~ (removed — ESPN API doesn't provide form in standings)
 
-### Phase 5 — Personalization & Profiles
-- [ ] "My Scores" personalized tab (only favorites)
-- [ ] "Live" tab (only in-progress matches)
-- [ ] Onboarding flow (pick your teams on first launch)
-- [ ] Player profile screen (bio, stats, career)
-- [ ] Full settings screen (theme, notifications, time format, spoiler mode)
-- [ ] Persistent storage migration (AsyncStorage → MMKV)
-- [ ] Full team profile (squad roster, player photos, team stats, transfer history)
+### Phase 5 — Personalization & Profiles ✅ DONE
+- [x] "My Scores" personalized filter (favorites only) + "Live" filter on Scores tab
+- [x] Onboarding flow (pick leagues & teams on first launch)
+- [x] Player profile screen (bio, stats, career, game log)
+- [x] Full settings screen (time format, spoiler mode, notifications, favorites management)
+- [x] Persistent storage migration (AsyncStorage → MMKV)
+- [x] Full team profile (Overview/Squad/Fixtures tabs, roster by position, season stats, coach)
 
 ### Phase 6 — Polish & Animations
 - [ ] Score flash animation on goal
