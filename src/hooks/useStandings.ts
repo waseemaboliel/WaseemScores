@@ -18,7 +18,7 @@ const parseGroup = (group: any): ParsedStandingsEntry[] => {
                 id: entry.team.id,
                 name: entry.team.displayName,
                 abbreviation: entry.team.abbreviation,
-                logo: entry.team.logos?.[0]?.href ?? '',
+                logo: entry.team.logos?.[0]?.href ?? (entry.team as any).logo ?? '',
             },
             gamesPlayed: stats.gamesPlayed ?? 0,
             wins: stats.wins ?? 0,

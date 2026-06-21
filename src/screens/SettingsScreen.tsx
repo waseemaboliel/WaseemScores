@@ -7,6 +7,7 @@ import {
     Switch,
     TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, getLeagueBySlug } from '../constants';
 import { useSettings } from '../stores';
 import { useFavorites } from '../stores';
@@ -117,7 +118,7 @@ export const SettingsScreen: React.FC = () => {
                     <Text style={styles.rowTitle}>Favorite Leagues</Text>
                     <View style={styles.rowRight}>
                         <Text style={styles.badge}>{favoriteLeagues.length}</Text>
-                        <Text style={styles.chevron}>{showLeagues ? '▾' : '›'}</Text>
+                        <Ionicons name={showLeagues ? 'chevron-down' : 'chevron-forward'} size={16} color={colors.textMuted} />
                     </View>
                 </TouchableOpacity>
                 {showLeagues && favoriteLeagues.map((slug) => {
@@ -139,7 +140,7 @@ export const SettingsScreen: React.FC = () => {
                     <Text style={styles.rowTitle}>Favorite Teams</Text>
                     <View style={styles.rowRight}>
                         <Text style={styles.badge}>{favoriteTeams.length}</Text>
-                        <Text style={styles.chevron}>{showTeams ? '▾' : '›'}</Text>
+                        <Ionicons name={showTeams ? 'chevron-down' : 'chevron-forward'} size={16} color={colors.textMuted} />
                     </View>
                 </TouchableOpacity>
                 {showTeams && favoriteTeams.map((teamId) => (

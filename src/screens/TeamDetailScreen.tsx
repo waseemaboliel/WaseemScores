@@ -13,6 +13,7 @@ import { useRoute } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { espnApi } from '../api';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants';
 import { useFavorites } from '../stores';
 import type { ScoresStackParamList } from '../navigation';
@@ -196,7 +197,7 @@ export const TeamDetailScreen: React.FC = () => {
                                     )}
                                 </View>
                             </View>
-                            <Text style={styles.chevron}>›</Text>
+                            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -269,8 +270,8 @@ export const TeamDetailScreen: React.FC = () => {
         <ScrollView style={styles.container}>
             {/* Team Header */}
             <View style={styles.header}>
-                {team?.logos?.[0]?.href && (
-                    <Image source={{ uri: team.logos[0].href }} style={styles.logo} />
+                {(team?.logos?.[0]?.href || team?.logo) && (
+                    <Image source={{ uri: team?.logos?.[0]?.href ?? team?.logo }} style={styles.logo} />
                 )}
                 <View style={styles.headerInfo}>
                     <Text style={styles.teamName}>{team?.displayName ?? teamName}</Text>
@@ -281,9 +282,11 @@ export const TeamDetailScreen: React.FC = () => {
                     onPress={() => toggleFavoriteTeam(teamId)}
                     style={styles.favBtn}
                 >
-                    <Text style={styles.favText}>
-                        {isTeamFavorite(teamId) ? '★' : '☆'}
-                    </Text>
+                    <Ionicons
+                        name={isTeamFavorite(teamId) ? 'star' : 'star-outline'}
+                        size={24}
+                        color={isTeamFavorite(teamId) ? colors.primary : colors.textMuted}
+                    />
                 </TouchableOpacity>
             </View>
 

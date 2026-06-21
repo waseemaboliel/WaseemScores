@@ -15,14 +15,14 @@ const parseMatchesFromEvents = (events: any[], slug: string): ParsedMatch[] => {
                 id: home?.team.id ?? '',
                 name: home?.team.displayName ?? '',
                 abbreviation: home?.team.abbreviation ?? '',
-                logo: home?.team.logos?.[0]?.href ?? '',
+                logo: home?.team.logos?.[0]?.href ?? (home?.team as any)?.logo ?? '',
                 score: home?.score ?? '',
             },
             awayTeam: {
                 id: away?.team.id ?? '',
                 name: away?.team.displayName ?? '',
                 abbreviation: away?.team.abbreviation ?? '',
-                logo: away?.team.logos?.[0]?.href ?? '',
+                logo: away?.team.logos?.[0]?.href ?? (away?.team as any)?.logo ?? '',
                 score: away?.score ?? '',
             },
             status: {

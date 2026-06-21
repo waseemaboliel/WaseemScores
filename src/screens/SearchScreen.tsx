@@ -7,15 +7,16 @@ import {
     StyleSheet,
     TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, LEAGUES, getLeaguesByRegion } from '../constants';
 import type { League, Region } from '../constants';
 import { useFavorites } from '../stores';
 
 const REGION_LABELS: { region: Region; label: string }[] = [
-    { region: 'fifa', label: '🌍 FIFA / Global' },
-    { region: 'europe', label: '🇪🇺 Europe' },
-    { region: 'other', label: '🌐 Other' },
+    { region: 'fifa', label: 'FIFA / Global' },
+    { region: 'europe', label: 'Europe' },
+    { region: 'other', label: 'Other' },
 ];
 
 interface LeagueSection {
@@ -56,7 +57,7 @@ export const SearchScreen: React.FC = () => {
         const result: LeagueSection[] = [];
 
         if (favorites.length > 0) {
-            result.push({ title: '⭐ Favorites', data: favorites });
+            result.push({ title: 'Favorites', data: favorites });
         }
 
         // Grouped by region
@@ -84,7 +85,7 @@ export const SearchScreen: React.FC = () => {
                 />
                 {query.length > 0 && (
                     <TouchableOpacity onPress={() => setQuery('')} style={styles.clearBtn}>
-                        <Text style={styles.clearText}>✕</Text>
+                        <Ionicons name="close-circle" size={18} color={colors.textMuted} />
                     </TouchableOpacity>
                 )}
             </View>
@@ -103,9 +104,11 @@ export const SearchScreen: React.FC = () => {
                             onPress={() => toggleFavoriteLeague(item.slug)}
                             style={styles.starBtn}
                         >
-                            <Text style={styles.starText}>
-                                {isLeagueFavorite(item.slug) ? '★' : '☆'}
-                            </Text>
+                            <Ionicons
+                                name={isLeagueFavorite(item.slug) ? 'star' : 'star-outline'}
+                                size={20}
+                                color={isLeagueFavorite(item.slug) ? colors.primary : colors.textMuted}
+                            />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.leagueInfoTouchable}
@@ -130,7 +133,7 @@ export const SearchScreen: React.FC = () => {
                                     </View>
                                 )}
                             </View>
-                            <Text style={styles.chevron}>›</Text>
+                            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                         </TouchableOpacity>
                     </View>
                 )}

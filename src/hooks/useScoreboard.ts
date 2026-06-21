@@ -17,14 +17,14 @@ const parseScoreboard = (data: ScoreboardResponse, slug: string): ParsedMatch[] 
                 id: homeComp?.team.id ?? '',
                 name: homeComp?.team.displayName ?? '',
                 abbreviation: homeComp?.team.abbreviation ?? '',
-                logo: homeComp?.team.logos?.[0]?.href ?? '',
+                logo: homeComp?.team.logos?.[0]?.href ?? (homeComp?.team as any).logo ?? '',
                 score: homeComp?.score ?? '',
             },
             awayTeam: {
                 id: awayComp?.team.id ?? '',
                 name: awayComp?.team.displayName ?? '',
                 abbreviation: awayComp?.team.abbreviation ?? '',
-                logo: awayComp?.team.logos?.[0]?.href ?? '',
+                logo: awayComp?.team.logos?.[0]?.href ?? (awayComp?.team as any).logo ?? '',
                 score: awayComp?.score ?? '',
             },
             status: {

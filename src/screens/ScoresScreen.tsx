@@ -20,6 +20,7 @@ import type { ParsedMatch, ScoreboardResponse } from '../api';
 import { MatchCard, ScoresSkeleton, EmptyState, ErrorState } from '../components';
 import { colors, DEFAULT_SCOREBOARD_LEAGUES, getLeagueBySlug } from '../constants';
 import { useFavorites } from '../stores';
+import { Ionicons } from '@expo/vector-icons';
 import { useGoalNotifications } from '../hooks/useGoalNotifications';
 import type { ScoresStackParamList } from '../navigation';
 
@@ -84,14 +85,14 @@ const parseMatches = (data: ScoreboardResponse, slug: string): ParsedMatch[] => 
                     id: home?.team.id ?? '',
                     name: home?.team.displayName ?? '',
                     abbreviation: home?.team.abbreviation ?? '',
-                    logo: home?.team.logos?.[0]?.href ?? '',
+                    logo: home?.team.logos?.[0]?.href ?? (home?.team as any).logo ?? '',
                     score: home?.score ?? '',
                 },
                 awayTeam: {
                     id: away?.team.id ?? '',
                     name: away?.team.displayName ?? '',
                     abbreviation: away?.team.abbreviation ?? '',
-                    logo: away?.team.logos?.[0]?.href ?? '',
+                    logo: away?.team.logos?.[0]?.href ?? (away?.team as any).logo ?? '',
                     score: away?.score ?? '',
                 },
                 status: {
@@ -189,7 +190,7 @@ export const ScoresScreen: React.FC = () => {
         navigation.setOptions({
             headerRight: () => (
                 <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ padding: 8 }}>
-                    <Text style={{ fontSize: 20, color: colors.textMuted }}>⚙</Text>
+                    <Ionicons name="settings-outline" size={22} color={colors.textMuted} />
                 </TouchableOpacity>
             ),
         });
@@ -358,8 +359,8 @@ export const ScoresScreen: React.FC = () => {
             <View style={styles.filterRow}>
                 {([
                     { key: 'all', label: 'All' },
-                    { key: 'my', label: '★ My Scores' },
-                    { key: 'live', label: '● Live' },
+                    { key: 'my', label: 'My Scores' },
+                    { key: 'live', label: 'Live' },
                 ] as const).map((f) => (
                     <TouchableOpacity
                         key={f.key}

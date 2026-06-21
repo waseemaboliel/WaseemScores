@@ -113,9 +113,9 @@ export const TopScorersScreen: React.FC = () => {
                             <View key={athlete?.id ?? index} style={styles.row}>
                                 <Text style={styles.rank}>{index + 1}</Text>
                                 <View style={styles.playerInfo}>
-                                    {athlete?.team?.logos?.[0]?.href && (
+                                    {(athlete?.team?.logos?.[0]?.href || athlete?.team?.logo) && (
                                         <Image
-                                            source={{ uri: athlete.team.logos[0].href }}
+                                            source={{ uri: athlete?.team?.logos?.[0]?.href ?? athlete?.team?.logo }}
                                             style={styles.teamBadge}
                                         />
                                     )}

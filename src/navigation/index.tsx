@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import {
     ScoresScreen,
     StandingsScreen,
@@ -128,6 +129,9 @@ export const AppNavigator: React.FC = () => {
                     component={ScoresStack}
                     options={{
                         tabBarLabel: 'Scores',
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="football-outline" size={size} color={color} />
+                        ),
                     }}
                 />
                 <Tab.Screen
@@ -136,6 +140,9 @@ export const AppNavigator: React.FC = () => {
                     options={{
                         title: 'Standings',
                         tabBarLabel: 'Standings',
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="podium-outline" size={size} color={color} />
+                        ),
                         headerShown: true,
                         headerStyle: {
                             backgroundColor: colors.surface,
@@ -154,6 +161,9 @@ export const AppNavigator: React.FC = () => {
                     options={{
                         title: 'Leagues',
                         tabBarLabel: 'Leagues',
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="trophy-outline" size={size} color={color} />
+                        ),
                         headerShown: true,
                         headerStyle: {
                             backgroundColor: colors.surface,
@@ -172,6 +182,9 @@ export const AppNavigator: React.FC = () => {
                     options={{
                         title: 'Top Scorers',
                         tabBarLabel: 'Stats',
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="stats-chart-outline" size={size} color={color} />
+                        ),
                         headerShown: true,
                         headerStyle: {
                             backgroundColor: colors.surface,
@@ -190,6 +203,9 @@ export const AppNavigator: React.FC = () => {
                     options={{
                         title: 'News',
                         tabBarLabel: 'News',
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="newspaper-outline" size={size} color={color} />
+                        ),
                         headerShown: true,
                         headerStyle: {
                             backgroundColor: colors.surface,
