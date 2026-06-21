@@ -52,11 +52,22 @@ const generateDates = (): { key: string; label: string; dayLabel: string; date: 
 const DATES = generateDates();
 const TODAY_INDEX = 7; // index of today in the 15-day array
 
+/** Get YYYYMMDD key for a Date in local timezone */
 const formatDateKey = (date: Date): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}${m}${d}`;
+};
+
+/** Check if an ISO date string falls on a given local calendar day */
+const isOnLocalDate = (isoDate: string, targetDate: Date): boolean => {
+    const matchLocal = new Date(isoDate);
+    return (
+        matchLocal.getFullYear() === targetDate.getFullYear() &&
+        matchLocal.getMonth() === targetDate.getMonth() &&
+        matchLocal.getDate() === targetDate.getDate()
+    );
 };
 
 const parseMatches = (data: ScoreboardResponse, slug: string): ParsedMatch[] => {
@@ -98,15 +109,42 @@ const parseMatches = (data: ScoreboardResponse, slug: string): ParsedMatch[] => 
     );
 };
 
-const fetchAllScoreboards = async (dateKey: string): Promise<LeagueSection[]> => {
+const fetchAllScoreboards = async (dateKey: string, targetDate: Date): Promise<LeagueSection[]> => {
+    // Fetch target day + previous day to catch timezone overlaps
+    // (ESPN uses event-local dates; a match at 4 AM Jerusalem could be under the previous UTC day)
+    const prevDay = new Date(targetDate);
+    prevDay.setDate(prevDay.getDate() - 1);
+    const prevKey = formatDateKey(prevDay);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextKey = formatDateKey(nextDay);
+
+    const datesToFetch = [prevKey, dateKey, nextKey];
+
     const results = await Promise.allSettled(
         DEFAULT_SCOREBOARD_LEAGUES.map(async (slug) => {
-            const data = await espnApi.getScoreboard(slug, dateKey);
-            const matches = parseMatches(data, slug);
+            // Fetch all 3 days in parallel
+            const dayResults = await Promise.allSettled(
+                datesToFetch.map((dk) => espnApi.getScoreboard(slug, dk)),
+            );
+            // Merge all matches, deduplicate by id
+            const seen = new Set<string>();
+            const allMatches: ParsedMatch[] = [];
+            for (const r of dayResults) {
+                if (r.status !== 'fulfilled') continue;
+                for (const m of parseMatches(r.value, slug)) {
+                    if (!seen.has(m.id)) {
+                        seen.add(m.id);
+                        allMatches.push(m);
+                    }
+                }
+            }
+            // Filter to only matches that fall on the target local date
+            const filtered = allMatches.filter((m) => isOnLocalDate(m.date, targetDate));
             return {
                 slug,
                 name: getLeagueBySlug(slug)?.shortName ?? slug,
-                matches,
+                matches: filtered,
             };
         })
     );
@@ -178,7 +216,7 @@ export const ScoresScreen: React.FC = () => {
 
     const { data, isLoading, isError, refetch, isRefetching } = useQuery({
         queryKey: ['scoreboard', 'all', selectedDate.key],
-        queryFn: () => fetchAllScoreboards(selectedDate.key),
+        queryFn: () => fetchAllScoreboards(selectedDate.key, selectedDate.date),
         staleTime: selectedDateIndex === TODAY_INDEX ? 30 * 1000 : 5 * 60 * 1000,
         // Auto-poll every 30s when viewing today and there are live matches
         refetchInterval: (query) => {

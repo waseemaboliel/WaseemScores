@@ -11,6 +11,17 @@ interface MatchCardProps {
     match: ParsedMatch;
 }
 
+/** Format match date to local kickoff time */
+const formatKickoffTime = (isoDate: string, use24h: boolean): string => {
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: !use24h,
+    });
+};
+
 const LiveDot: React.FC = () => {
     const opacity = useRef(new Animated.Value(1)).current;
 
@@ -66,6 +77,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
     // Countdown for scheduled matches
     const countdown = isScheduled ? getCountdown(match.date) : null;
+    const kickoffTime = isScheduled ? formatKickoffTime(match.date, settings.timeFormat === '24h') : '';
 
     const handlePress = () => {
         if (settings.spoilerMode && !spoilerRevealed && !isScheduled) {
@@ -124,7 +136,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
                 <View style={styles.scoreContainer}>
                     {isScheduled ? (
                         <View style={styles.scheduleContainer}>
-                            <Text style={styles.scheduleTime}>{match.status.detail}</Text>
+                            <Text style={styles.scheduleTime}>{kickoffTime}</Text>
                             {countdown && (
                                 <Text style={styles.countdown}>{countdown}</Text>
                             )}
