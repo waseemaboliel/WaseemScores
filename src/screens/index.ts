@@ -2,3 +2,6 @@ export { ScoresScreen } from './ScoresScreen';
 export { StandingsScreen } from './StandingsScreen';
 export { MatchDetailScreen } from './MatchDetailScreen';
 export { SearchScreen } from './SearchScreen';
+export { TeamDetailScreen } from './TeamDetailScreen';
+export { TopScorersScreen } from './TopScorersScreen';
+export { NewsScreen } from './NewsScreen';

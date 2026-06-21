@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppNavigator } from './src/navigation';
 import { FavoritesProvider } from './src/stores';
+import { registerForPushNotifications } from './src/services/notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,6 +15,10 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
+  useEffect(() => {
+    registerForPushNotifications();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <FavoritesProvider>

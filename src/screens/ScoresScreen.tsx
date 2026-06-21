@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import type { ParsedMatch, ScoreboardResponse } from '../api';
 import { MatchCard, ScoresSkeleton } from '../components';
 import { colors, DEFAULT_SCOREBOARD_LEAGUES, getLeagueBySlug } from '../constants';
 import { useFavorites } from '../stores';
+import { useGoalNotifications } from '../hooks/useGoalNotifications';
 
 interface LeagueSection {
     slug: string;
@@ -157,6 +158,13 @@ export const ScoresScreen: React.FC = () => {
         const bLive = b.matches.some((m) => m.status.state === 'in') ? 0 : 1;
         return aLive - bLive;
     }) : data;
+
+    // Goal notifications for favorite teams
+    const allMatches = useMemo(
+        () => sortedData?.flatMap((s) => s.matches) ?? [],
+        [sortedData],
+    );
+    useGoalNotifications(allMatches);
 
     const renderContent = () => {
         if (isLoading) {

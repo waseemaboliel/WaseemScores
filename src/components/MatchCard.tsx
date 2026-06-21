@@ -55,7 +55,17 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
             {/* Teams & Scores */}
             <View style={styles.matchRow}>
                 {/* Home Team */}
-                <View style={styles.teamContainer}>
+                <TouchableOpacity
+                    style={styles.teamContainer}
+                    onPress={() => {
+                        navigation.navigate('TeamDetail', {
+                            teamId: match.homeTeam.id,
+                            slug: match.league.slug,
+                            teamName: match.homeTeam.name,
+                        });
+                    }}
+                    activeOpacity={0.6}
+                >
                     {match.homeTeam.logo ? (
                         <Image source={{ uri: match.homeTeam.logo }} style={styles.teamLogo} />
                     ) : (
@@ -64,7 +74,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
                     <Text style={styles.teamName} numberOfLines={1}>
                         {match.homeTeam.name}
                     </Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Score */}
                 <View style={styles.scoreContainer}>
@@ -78,7 +88,17 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
                 </View>
 
                 {/* Away Team */}
-                <View style={[styles.teamContainer, styles.teamContainerAway]}>
+                <TouchableOpacity
+                    style={[styles.teamContainer, styles.teamContainerAway]}
+                    onPress={() => {
+                        navigation.navigate('TeamDetail', {
+                            teamId: match.awayTeam.id,
+                            slug: match.league.slug,
+                            teamName: match.awayTeam.name,
+                        });
+                    }}
+                    activeOpacity={0.6}
+                >
                     {match.awayTeam.logo ? (
                         <Image source={{ uri: match.awayTeam.logo }} style={styles.teamLogo} />
                     ) : (
@@ -87,7 +107,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
                     <Text style={styles.teamName} numberOfLines={1}>
                         {match.awayTeam.name}
                     </Text>
-                </View>
+                </TouchableOpacity>
             </View>
         </TouchableOpacity>
     );

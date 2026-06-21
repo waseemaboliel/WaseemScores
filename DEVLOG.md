@@ -347,3 +347,72 @@ src/
 - All four features pass `npx tsc --noEmit` with 0 errors
 - Native rebuild needed: `npx expo prebuild --clean && npx expo run:ios` (AsyncStorage + expo-linear-gradient are native modules)
 
+---
+
+## Phase 5: Advanced Features
+**Date**: 2026-06-21
+**Status**: ✅ Complete
+
+### 5.1 Team Detail Screen
+- **File**: `src/screens/TeamDetailScreen.tsx`
+- Shows team logo, name, standing summary, record
+- Favorite toggle (star) for the team
+- Next match card with tap-to-navigate
+- Recent/upcoming fixtures list (up to 10)
+- API: `ESPN_BASE/{slug}/teams/{teamId}` + `ESPN_BASE/{slug}/teams/{teamId}/schedule`
+
+### 5.2 Head-to-Head Stats
+- Added H2H section to `MatchDetailScreen`
+- Shows last 5 previous meetings between the two teams
+- Data sourced from `headToHeadGames` or `headToHead` field in match summary response
+- Shows date, team abbreviations, and final score
+
+### 5.3 Top Scorers & Assists
+- **File**: `src/screens/TopScorersScreen.tsx`
+- New "Stats" tab in bottom navigation
+- League picker (horizontal scroll, all 22 leagues)
+- Toggle between Goals and Assists leaders
+- Table with rank, player name, team badge, APP/G/A stats
+- API: `ESPN_BASE/{slug}/statistics?season={YEAR}`
+- Response structure: `stats[0]` = goalsLeaders, `stats[1]` = assistsLeaders
+
+### 5.4 Push Notifications
+- Installed: `expo-notifications`, `expo-device`, `expo-constants`
+- **Service**: `src/services/notifications.ts`
+  - Registers for push permissions on app launch
+  - Android notification channel "goals" with high importance
+  - Helper functions: `sendLocalGoalNotification`, `sendMatchStartNotification`
+- **Hook**: `src/hooks/useGoalNotifications.ts`
+  - Monitors live matches on ScoresScreen
+  - Compares score snapshots between refreshes
+  - Fires local notification when a favorite team scores
+
+### 5.5 News Feed
+- **File**: `src/screens/NewsScreen.tsx`
+- New "News" tab in bottom navigation
+- League picker for filtering
+- Article cards with image, headline, date, description
+- Tapping an article opens the ESPN link via `Linking.openURL`
+- API: `ESPN_BASE/{slug}/news`
+
+### 5.6 Team Tappability (MatchCard)
+- Updated `src/components/MatchCard.tsx`
+- Team names/logos are now individually tappable
+- Navigates to TeamDetail with teamId, slug, teamName
+
+### 5.7 Navigation Updates
+- `ScoresStackParamList` now includes `TeamDetail` route
+- Bottom tabs: Scores | Standings | Leagues | Stats | News
+- All new screens use dark AMOLED theme
+
+### 5.8 API Additions (`src/api/endpoints.ts`)
+- `teamInfo(slug, teamId)` — Team info endpoint
+- `teamSchedule(slug, teamId)` — Team schedule endpoint
+- `leagueStatistics(slug, season?)` — League top scorers/assists
+- `news(slug)` — League news articles
+
+### 5.9 Notes
+- All features pass `npx tsc --noEmit` with 0 errors
+- Native rebuild required: `npx expo prebuild --clean && npx expo run:ios` (expo-notifications, expo-device, expo-constants are native modules)
+- H2H data availability depends on ESPN including it in the match summary response (not all matches have it)
+

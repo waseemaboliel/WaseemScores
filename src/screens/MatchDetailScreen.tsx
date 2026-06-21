@@ -92,6 +92,7 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
     const keyEvents: KeyEvent[] = (data as any).keyEvents ?? [];
     const rosters: TeamRoster[] = (data as any).rosters ?? [];
     const boxscoreTeams: TeamStats[] = (data as any).boxscore?.teams ?? [];
+    const headToHead: any[] = (data as any).headToHeadGames ?? (data as any).headToHead ?? [];
 
     const homeRoster = rosters.find((r) => r.homeAway === 'home');
     const awayRoster = rosters.find((r) => r.homeAway === 'away');
@@ -143,6 +144,42 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
                                 <Text style={styles.statValue}>{stat.displayValue}</Text>
                                 <Text style={styles.statLabel}>{label}</Text>
                                 <Text style={styles.statValue}>{awayStat.displayValue}</Text>
+                            </View>
+                        );
+                    })}
+                </View>
+            )}
+
+            {/* Head-to-Head */}
+            {headToHead.length > 0 && (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Head to Head</Text>
+                    {headToHead.slice(0, 5).map((game: any, i: number) => {
+                        const comp = game.competitions?.[0];
+                        const teams = comp?.competitors ?? [];
+                        const homeH2H = teams.find((t: any) => t.homeAway === 'home');
+                        const awayH2H = teams.find((t: any) => t.homeAway === 'away');
+                        const date = game.date
+                            ? new Date(game.date).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                            })
+                            : '';
+                        return (
+                            <View key={game.id ?? i} style={styles.h2hRow}>
+                                <Text style={styles.h2hDate}>{date}</Text>
+                                <View style={styles.h2hMatch}>
+                                    <Text style={styles.h2hTeam} numberOfLines={1}>
+                                        {homeH2H?.team?.abbreviation ?? homeH2H?.team?.displayName ?? '—'}
+                                    </Text>
+                                    <Text style={styles.h2hScore}>
+                                        {homeH2H?.score?.displayValue ?? '-'} - {awayH2H?.score?.displayValue ?? '-'}
+                                    </Text>
+                                    <Text style={styles.h2hTeam} numberOfLines={1}>
+                                        {awayH2H?.team?.abbreviation ?? awayH2H?.team?.displayName ?? '—'}
+                                    </Text>
+                                </View>
                             </View>
                         );
                     })}
@@ -323,5 +360,36 @@ const styles = StyleSheet.create({
         color: colors.textMuted,
         marginTop: 12,
         marginBottom: 6,
+    },
+    // H2H
+    h2hRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    h2hDate: {
+        width: 80,
+        fontSize: 11,
+        color: colors.textMuted,
+    },
+    h2hMatch: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+    },
+    h2hTeam: {
+        flex: 1,
+        fontSize: 12,
+        color: colors.textPrimary,
+        textAlign: 'center',
+    },
+    h2hScore: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: colors.textPrimary,
     },
 });

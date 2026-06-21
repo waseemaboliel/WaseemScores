@@ -25,4 +25,16 @@ export const espnApi = {
 
     getMatchSummary: (slug: string, eventId: string) =>
         fetchJson<MatchSummaryResponse>(endpoints.matchSummary(slug, eventId)),
+
+    getTeamInfo: (slug: string, teamId: string) =>
+        fetchJson<any>(endpoints.teamInfo(slug, teamId)),
+
+    getTeamSchedule: (slug: string, teamId: string) =>
+        fetchJson<any>(endpoints.teamSchedule(slug, teamId)),
+
+    getLeagueStatistics: (slug: string, season?: number) =>
+        fetchJson<any>(endpoints.leagueStatistics(slug, season)),
+
+    getNews: (slug: string) =>
+        fetchJson<any>(endpoints.news(slug)),
 };

@@ -23,4 +23,21 @@ export const endpoints = {
     leagueDiscovery: () => {
         return 'https://site.api.espn.com/apis/site/v2/leagues/dropdown?sport=soccer&limit=200';
     },
+
+    teamInfo: (slug: string, teamId: string) => {
+        return `${ESPN_BASE}/${slug}/teams/${teamId}`;
+    },
+
+    teamSchedule: (slug: string, teamId: string) => {
+        return `${ESPN_BASE}/${slug}/teams/${teamId}/schedule`;
+    },
+
+    leagueStatistics: (slug: string, season?: number) => {
+        const base = `${ESPN_BASE}/${slug}/statistics`;
+        return season ? `${base}?season=${season}` : base;
+    },
+
+    news: (slug: string) => {
+        return `${ESPN_BASE}/${slug}/news`;
+    },
 };

@@ -2,7 +2,15 @@ import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ScoresScreen, StandingsScreen, MatchDetailScreen, SearchScreen } from '../screens';
+import {
+    ScoresScreen,
+    StandingsScreen,
+    MatchDetailScreen,
+    SearchScreen,
+    TeamDetailScreen,
+    TopScorersScreen,
+    NewsScreen,
+} from '../screens';
 import { colors } from '../constants';
 
 const DarkTheme = {
@@ -27,6 +35,11 @@ export type ScoresStackParamList = {
         homeTeam: string;
         awayTeam: string;
     };
+    TeamDetail: {
+        teamId: string;
+        slug: string;
+        teamName: string;
+    };
 };
 
 const Stack = createNativeStackNavigator<ScoresStackParamList>();
@@ -47,6 +60,13 @@ const ScoresStack: React.FC = () => (
             component={MatchDetailScreen}
             options={({ route }) => ({
                 title: `${route.params.homeTeam} vs ${route.params.awayTeam}`,
+            })}
+        />
+        <Stack.Screen
+            name="TeamDetail"
+            component={TeamDetailScreen}
+            options={({ route }) => ({
+                title: route.params.teamName,
             })}
         />
     </Stack.Navigator>
@@ -102,6 +122,42 @@ export const AppNavigator: React.FC = () => {
                     options={{
                         title: 'Leagues',
                         tabBarLabel: 'Leagues',
+                        headerShown: true,
+                        headerStyle: {
+                            backgroundColor: colors.surface,
+                        },
+                        headerTintColor: colors.textPrimary,
+                        headerTitleStyle: {
+                            fontWeight: '700',
+                            fontSize: 18,
+                        },
+                        headerShadowVisible: false,
+                    }}
+                />
+                <Tab.Screen
+                    name="Stats"
+                    component={TopScorersScreen}
+                    options={{
+                        title: 'Top Scorers',
+                        tabBarLabel: 'Stats',
+                        headerShown: true,
+                        headerStyle: {
+                            backgroundColor: colors.surface,
+                        },
+                        headerTintColor: colors.textPrimary,
+                        headerTitleStyle: {
+                            fontWeight: '700',
+                            fontSize: 18,
+                        },
+                        headerShadowVisible: false,
+                    }}
+                />
+                <Tab.Screen
+                    name="News"
+                    component={NewsScreen}
+                    options={{
+                        title: 'News',
+                        tabBarLabel: 'News',
                         headerShown: true,
                         headerStyle: {
                             backgroundColor: colors.surface,
