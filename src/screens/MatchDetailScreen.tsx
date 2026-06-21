@@ -10,6 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { espnApi } from '../api';
 import { colors } from '../constants';
+import { FormationView, ErrorState } from '../components';
 
 interface MatchDetailScreenProps {
     route: {
@@ -67,7 +68,7 @@ const STAT_DISPLAY: Record<string, string> = {
 export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) => {
     const { eventId, slug, homeTeam, awayTeam } = route.params;
 
-    const { data, isLoading, isError } = useQuery({
+    const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['matchDetail', slug, eventId],
         queryFn: () => espnApi.getMatchSummary(slug, eventId),
         staleTime: 30 * 1000,
@@ -82,11 +83,7 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
     }
 
     if (isError || !data) {
-        return (
-            <View style={styles.centered}>
-                <Text style={styles.errorText}>Failed to load match details</Text>
-            </View>
-        );
+        return <ErrorState message="Failed to load match details" onRetry={refetch} />;
     }
 
     const keyEvents: KeyEvent[] = (data as any).keyEvents ?? [];
@@ -191,39 +188,68 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Lineups</Text>
 
-                    {/* Formations */}
-                    <View style={styles.formationRow}>
-                        <Text style={styles.formationText}>
-                            {homeRoster.team.displayName} ({homeRoster.formation})
-                        </Text>
-                        <Text style={styles.formationText}>
-                            {awayRoster.team.displayName} ({awayRoster.formation})
-                        </Text>
-                    </View>
-
-                    {/* Starting XI */}
-                    <View style={styles.lineupsContainer}>
-                        <View style={styles.lineupColumn}>
-                            {homeRoster.roster
-                                .filter((p) => p.starter)
-                                .map((p, i) => (
-                                    <Text key={i} style={styles.playerText}>
-                                        {p.jersey} {p.athlete?.shortName ?? p.athlete?.displayName}
-                                    </Text>
-                                ))}
+                    {/* Formation Pitch Views */}
+                    {homeRoster.formation && (
+                        <View style={styles.formationPitchContainer}>
+                            <Text style={styles.formationTeamLabel}>
+                                {homeRoster.team.displayName} ({homeRoster.formation})
+                            </Text>
+                            <FormationView
+                                formation={homeRoster.formation}
+                                players={homeRoster.roster
+                                    .filter((p) => p.starter)
+                                    .map((p) => ({
+                                        jersey: p.jersey,
+                                        name: p.athlete?.shortName ?? p.athlete?.displayName ?? '',
+                                    }))}
+                            />
                         </View>
-                        <View style={styles.lineupColumn}>
-                            {awayRoster.roster
-                                .filter((p) => p.starter)
-                                .map((p, i) => (
-                                    <Text key={i} style={[styles.playerText, styles.playerTextRight]}>
-                                        {p.athlete?.shortName ?? p.athlete?.displayName} {p.jersey}
-                                    </Text>
-                                ))}
+                    )}
+                    {awayRoster.formation && (
+                        <View style={styles.formationPitchContainer}>
+                            <Text style={styles.formationTeamLabel}>
+                                {awayRoster.team.displayName} ({awayRoster.formation})
+                            </Text>
+                            <FormationView
+                                formation={awayRoster.formation}
+                                players={awayRoster.roster
+                                    .filter((p) => p.starter)
+                                    .map((p) => ({
+                                        jersey: p.jersey,
+                                        name: p.athlete?.shortName ?? p.athlete?.displayName ?? '',
+                                    }))}
+                                isAway
+                            />
                         </View>
-                    </View>
+                    )}
 
-                    {/* Substitutes Header */}
+                    {/* Fallback: text list if no formation */}
+                    {!homeRoster.formation && !awayRoster.formation && (
+                        <>
+                            <View style={styles.lineupsContainer}>
+                                <View style={styles.lineupColumn}>
+                                    {homeRoster.roster
+                                        .filter((p) => p.starter)
+                                        .map((p, i) => (
+                                            <Text key={i} style={styles.playerText}>
+                                                {p.jersey} {p.athlete?.shortName ?? p.athlete?.displayName}
+                                            </Text>
+                                        ))}
+                                </View>
+                                <View style={styles.lineupColumn}>
+                                    {awayRoster.roster
+                                        .filter((p) => p.starter)
+                                        .map((p, i) => (
+                                            <Text key={i} style={[styles.playerText, styles.playerTextRight]}>
+                                                {p.athlete?.shortName ?? p.athlete?.displayName} {p.jersey}
+                                            </Text>
+                                        ))}
+                                </View>
+                            </View>
+                        </>
+                    )}
+
+                    {/* Substitutes */}
                     <Text style={styles.subsHeader}>Substitutes</Text>
                     <View style={styles.lineupsContainer}>
                         <View style={styles.lineupColumn}>
@@ -327,6 +353,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     // Lineups
+    formationPitchContainer: {
+        marginBottom: 16,
+    },
+    formationTeamLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: colors.textSecondary,
+        marginBottom: 8,
+        textAlign: 'center',
+    },
     formationRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',

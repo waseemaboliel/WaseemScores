@@ -524,3 +524,46 @@ src/
 - All features pass `npx tsc --noEmit` with 0 errors
 - Native rebuild required for MMKV: `npx expo prebuild --clean && npx expo run:ios`
 
+---
+
+## Phase 6 — Polish & Animations (2026-06-22)
+
+### 6.1 Score Flash Animation
+- **File**: `src/components/MatchCard.tsx`
+- Green overlay flash when score changes during a live match
+- Tracks previous score via `useRef`, triggers `Animated.sequence` on change
+- Fades in over 100ms, fades out over 1500ms
+
+### 6.2 Lineups Visual Pitch Layout
+- **File**: `src/components/FormationView.tsx` (new)
+- Green pitch background with center line and center circle markings
+- Players rendered as colored dots with jersey number and short name
+- Parses formation string (e.g. "4-3-3") into rows: GK + formation lines
+- Away team rows reversed (attack at top, GK at bottom)
+- Integrated into `MatchDetailScreen.tsx` — shows per team when formation data exists
+- Falls back to text list when no formation available
+
+### 6.3 Spoiler Mode
+- **File**: `src/components/MatchCard.tsx`
+- When `settings.spoilerMode` is enabled, scores display as "? - ?"
+- First tap reveals score, second tap navigates to match detail
+- Scheduled matches are unaffected (always show kickoff time)
+- Toggle available in Settings screen
+
+### 6.4 Empty States & Error Handling
+- **Files**: `src/components/EmptyState.tsx` (new), multiple screens
+- Reusable `EmptyState` component: icon, title, subtitle, optional action button
+- Reusable `ErrorState` component: error icon, message, retry button
+- Applied to ScoresScreen (per-filter contextual messages), MatchDetailScreen (retry)
+- Icons: ⭐ (My Scores), ⚽ (Live), 📅 (No matches), ⚠️ (Error)
+
+### 6.5 Match Countdown Timer
+- **File**: `src/components/MatchCard.tsx`
+- Scheduled matches within 24 hours show countdown: "in Xh Ym" or "in Xm"
+- Displayed below the kickoff time in green accent color
+- Matches more than 24h away show only kickoff time
+
+### 6.6 Notes
+- All features pass `npx tsc --noEmit` with 0 errors
+- No native rebuild required (all JS changes)
+

@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { espnApi } from '../api';
 import type { ParsedMatch, ScoreboardResponse } from '../api';
-import { MatchCard, ScoresSkeleton } from '../components';
+import { MatchCard, ScoresSkeleton, EmptyState, ErrorState } from '../components';
 import { colors, DEFAULT_SCOREBOARD_LEAGUES, getLeagueBySlug } from '../constants';
 import { useFavorites } from '../stores';
 import { useGoalNotifications } from '../hooks/useGoalNotifications';
@@ -239,34 +239,17 @@ export const ScoresScreen: React.FC = () => {
         }
 
         if (isError) {
-            return (
-                <View style={styles.centered}>
-                    <Text style={styles.errorText}>Failed to load scores</Text>
-                    <Text style={styles.retryText} onPress={() => refetch()}>
-                        Tap to retry
-                    </Text>
-                </View>
-            );
+            return <ErrorState message="Failed to load scores" onRetry={refetch} />;
         }
 
         if (!filteredData || filteredData.length === 0) {
-            const emptyMessage = filter === 'my'
-                ? 'No matches for your favorites'
+            const emptyProps = filter === 'my'
+                ? { icon: '⭐', title: 'No matches for your favorites', subtitle: 'Star leagues and teams to see them here' }
                 : filter === 'live'
-                    ? 'No live matches right now'
-                    : 'No matches';
-            const emptySubtext = filter === 'my'
-                ? 'Star leagues and teams to see them here'
-                : filter === 'live'
-                    ? 'Check back when matches are in progress'
-                    : 'No fixtures scheduled for this day';
+                    ? { icon: '⚽', title: 'No live matches right now', subtitle: 'Check back when matches are in progress' }
+                    : { icon: '📅', title: 'No matches', subtitle: 'No fixtures scheduled for this day' };
 
-            return (
-                <View style={styles.centered}>
-                    <Text style={styles.emptyText}>{emptyMessage}</Text>
-                    <Text style={styles.emptySubtext}>{emptySubtext}</Text>
-                </View>
-            );
+            return <EmptyState {...emptyProps} />;
         }
 
         return (

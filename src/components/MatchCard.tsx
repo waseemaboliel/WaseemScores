@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ParsedMatch } from '../api';
 import type { ScoresStackParamList } from '../navigation';
 import { colors } from '../constants';
+import { useSettings } from '../stores';
 
 interface MatchCardProps {
     match: ParsedMatch;
@@ -27,13 +28,50 @@ const LiveDot: React.FC = () => {
     return <Animated.View style={[styles.liveDot, { opacity }]} />;
 };
 
+const getCountdown = (dateStr: string): string | null => {
+    const now = new Date();
+    const match = new Date(dateStr);
+    const diff = match.getTime() - now.getTime();
+    if (diff <= 0 || diff > 24 * 60 * 60 * 1000) return null; // only show within 24h
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `in ${hours}h ${mins}m`;
+    return `in ${mins}m`;
+};
+
 export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
     const navigation = useNavigation<NativeStackNavigationProp<ScoresStackParamList>>();
+    const { settings } = useSettings();
     const isLive = match.status.state === 'in';
     const isFinished = match.status.state === 'post';
     const isScheduled = match.status.state === 'pre';
+    const [spoilerRevealed, setSpoilerRevealed] = useState(false);
+    const showScores = !settings.spoilerMode || spoilerRevealed || isScheduled;
+
+    // Score flash animation
+    const flashOpacity = useRef(new Animated.Value(0)).current;
+    const prevScoreRef = useRef(`${match.homeTeam.score}-${match.awayTeam.score}`);
+
+    useEffect(() => {
+        const currentScore = `${match.homeTeam.score}-${match.awayTeam.score}`;
+        if (isLive && prevScoreRef.current !== currentScore && prevScoreRef.current !== '-') {
+            // Score changed — flash!
+            Animated.sequence([
+                Animated.timing(flashOpacity, { toValue: 1, duration: 100, useNativeDriver: true }),
+                Animated.timing(flashOpacity, { toValue: 0, duration: 1500, useNativeDriver: true }),
+            ]).start();
+        }
+        prevScoreRef.current = currentScore;
+    }, [match.homeTeam.score, match.awayTeam.score, isLive, flashOpacity]);
+
+    // Countdown for scheduled matches
+    const countdown = isScheduled ? getCountdown(match.date) : null;
 
     const handlePress = () => {
+        if (settings.spoilerMode && !spoilerRevealed && !isScheduled) {
+            setSpoilerRevealed(true);
+            return;
+        }
         navigation.navigate('MatchDetail', {
             eventId: match.id,
             slug: match.league.slug,
@@ -44,6 +82,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
     return (
         <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.7}>
+            {/* Score flash overlay */}
+            <Animated.View
+                style={[styles.flashOverlay, { opacity: flashOpacity }]}
+                pointerEvents="none"
+            />
+
             {/* Status */}
             <View style={styles.statusContainer}>
                 {isLive && <LiveDot />}
@@ -76,14 +120,21 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
                     </Text>
                 </TouchableOpacity>
 
-                {/* Score */}
+                {/* Score / Countdown */}
                 <View style={styles.scoreContainer}>
                     {isScheduled ? (
-                        <Text style={styles.scheduleTime}>{match.status.detail}</Text>
-                    ) : (
+                        <View style={styles.scheduleContainer}>
+                            <Text style={styles.scheduleTime}>{match.status.detail}</Text>
+                            {countdown && (
+                                <Text style={styles.countdown}>{countdown}</Text>
+                            )}
+                        </View>
+                    ) : showScores ? (
                         <Text style={[styles.score, isLive && styles.liveScore]}>
                             {match.homeTeam.score} - {match.awayTeam.score}
                         </Text>
+                    ) : (
+                        <Text style={styles.spoilerHidden}>? - ?</Text>
                     )}
                 </View>
 
@@ -119,6 +170,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: colors.separator,
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    flashOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: colors.primary + '25',
     },
     statusContainer: {
         flexDirection: 'row',
@@ -188,5 +249,19 @@ const styles = StyleSheet.create({
     scheduleTime: {
         fontSize: 13,
         color: colors.textSecondary,
+    },
+    scheduleContainer: {
+        alignItems: 'center',
+    },
+    countdown: {
+        fontSize: 10,
+        color: colors.primary,
+        marginTop: 2,
+        fontWeight: '600',
+    },
+    spoilerHidden: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.textMuted,
     },
 });

@@ -419,12 +419,12 @@ xcrun simctl list devices available
 - [x] Persistent storage migration (AsyncStorage → MMKV)
 - [x] Full team profile (Overview/Squad/Fixtures tabs, roster by position, season stats, coach)
 
-### Phase 6 — Polish & Animations
-- [ ] Score flash animation on goal
-- [ ] Lineups visual pitch layout (formation view)
-- [ ] Spoiler mode (hide scores until tap)
-- [ ] Comprehensive empty states & error handling
-- [ ] Match countdown timer for upcoming games
+### Phase 6 — Polish & Animations ✅ DONE
+- [x] Score flash animation on goal
+- [x] Lineups visual pitch layout (formation view)
+- [x] Spoiler mode (hide scores until tap)
+- [x] Comprehensive empty states & error handling
+- [x] Match countdown timer for upcoming games
 
 ### Phase 7 — Statistics & Comparison
 - [ ] Points progression chart (line graph over season)
