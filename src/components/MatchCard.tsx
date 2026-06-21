@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { ParsedMatch } from '../api';
@@ -9,6 +9,23 @@ import { colors } from '../constants';
 interface MatchCardProps {
     match: ParsedMatch;
 }
+
+const LiveDot: React.FC = () => {
+    const opacity = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+                Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+            ])
+        );
+        pulse.start();
+        return () => pulse.stop();
+    }, [opacity]);
+
+    return <Animated.View style={[styles.liveDot, { opacity }]} />;
+};
 
 export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
     const navigation = useNavigation<NativeStackNavigationProp<ScoresStackParamList>>();
@@ -29,7 +46,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
         <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.7}>
             {/* Status */}
             <View style={styles.statusContainer}>
-                {isLive && <View style={styles.liveDot} />}
+                {isLive && <LiveDot />}
                 <Text style={[styles.statusText, isLive && styles.liveText]}>
                     {match.status.detail}
                 </Text>

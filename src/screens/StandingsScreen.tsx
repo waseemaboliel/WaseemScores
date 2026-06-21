@@ -9,7 +9,7 @@ import {
     RefreshControl,
 } from 'react-native';
 import { useStandings, useSeasons, useTournamentCalendar, useBracket, useSeasonBracket } from '../hooks';
-import { StandingsTable, BracketView } from '../components';
+import { StandingsTable, BracketView, StandingsSkeleton } from '../components';
 import { colors, LEAGUES } from '../constants';
 import type { League } from '../constants';
 
@@ -142,10 +142,7 @@ export const StandingsScreen: React.FC = () => {
             {/* Content */}
             {activeTab === 'groups' ? (
                 isLoading ? (
-                    <View style={styles.centered}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={styles.loadingText}>Loading standings...</Text>
-                    </View>
+                    <StandingsSkeleton />
                 ) : isError ? (
                     <View style={styles.centered}>
                         <Text style={styles.errorText}>Failed to load standings</Text>
@@ -184,10 +181,7 @@ export const StandingsScreen: React.FC = () => {
             ) : (
                 /* Bracket Tab */
                 bracketLoading ? (
-                    <View style={styles.centered}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                        <Text style={styles.loadingText}>Loading bracket...</Text>
-                    </View>
+                    <StandingsSkeleton />
                 ) : bracketData && bracketData.length > 0 ? (
                     <ScrollView style={styles.tableScroll}>
                         <BracketView rounds={bracketData} />

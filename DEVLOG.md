@@ -294,3 +294,56 @@ src/
 - All leagues browsable by region
 - Season picker for standings
 - Search functionality
+
+---
+
+## Phase 4: Polish & Enhancements
+**Date**: 2026-06-22
+**Status**: ✅ Complete
+
+---
+
+### 4.1 Live Auto-Refresh
+
+- **What**: Automatic 30-second polling when live matches are on screen
+- **How**: TanStack Query `refetchInterval` callback — only activates when viewing today AND data contains live matches (`state === 'in'`)
+- **File**: `src/screens/ScoresScreen.tsx`
+- **Benefit**: Scores update automatically without manual pull-to-refresh during live games
+
+### 4.2 Favorites System
+
+- **What**: Star leagues to pin them at the top of the scores feed
+- **How**: React Context + AsyncStorage for persistence
+- **Package**: `@react-native-async-storage/async-storage`
+- **Files**:
+  - `src/stores/FavoritesContext.tsx` — context provider with `toggleFavoriteLeague`, `toggleFavoriteTeam`, persistence
+  - `src/stores/index.ts` — barrel export
+  - `App.tsx` — wrapped with `<FavoritesProvider>`
+  - `src/screens/SearchScreen.tsx` — star toggle per league, favorites sorted first
+  - `src/screens/ScoresScreen.tsx` — favorite leagues pinned at top, then live, then rest
+
+### 4.3 App Branding & Configuration
+
+- **What**: Dark splash screen, proper bundle ID, dark UI style
+- **File**: `app.json`
+- **Changes**:
+  - `userInterfaceStyle` → `"dark"`
+  - Splash: dark background `#0F0F0F`, uses `splash-icon.png`
+  - iOS bundle: `com.waseemscores.app`
+  - Android package: `com.waseemscores.app`
+  - Adaptive icon background → `#0F0F0F`
+
+### 4.4 Animations
+
+- **What**: Skeleton loading states + pulsing live indicator
+- **Package**: `expo-linear-gradient` (installed for future shimmer use)
+- **Files**:
+  - `src/components/Skeletons.tsx` — `ScoresSkeleton` and `StandingsSkeleton` with animated shimmer bars
+  - `src/components/MatchCard.tsx` — `LiveDot` component with pulsing opacity animation
+- **Benefit**: App feels responsive during data loads; live matches have an eye-catching pulse
+
+### 4.5 Notes
+
+- All four features pass `npx tsc --noEmit` with 0 errors
+- Native rebuild needed: `npx expo prebuild --clean && npx expo run:ios` (AsyncStorage + expo-linear-gradient are native modules)
+

@@ -12,8 +12,9 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { espnApi } from '../api';
 import type { ParsedMatch, ScoreboardResponse } from '../api';
-import { MatchCard } from '../components';
+import { MatchCard, ScoresSkeleton } from '../components';
 import { colors, DEFAULT_SCOREBOARD_LEAGUES, getLeagueBySlug } from '../constants';
+import { useFavorites } from '../stores';
 
 interface LeagueSection {
     slug: string;
@@ -133,21 +134,33 @@ export const ScoresScreen: React.FC = () => {
     const [selectedDateIndex, setSelectedDateIndex] = useState(TODAY_INDEX);
     const dateScrollRef = useRef<ScrollView>(null);
     const selectedDate = DATES[selectedDateIndex];
+    const { favoriteLeagues } = useFavorites();
 
     const { data, isLoading, isError, refetch, isRefetching } = useQuery({
         queryKey: ['scoreboard', 'all', selectedDate.key],
         queryFn: () => fetchAllScoreboards(selectedDate.key),
         staleTime: selectedDateIndex === TODAY_INDEX ? 30 * 1000 : 5 * 60 * 1000,
+        // Auto-poll every 30s when viewing today and there are live matches
+        refetchInterval: (query) => {
+            if (selectedDateIndex !== TODAY_INDEX) return false;
+            const hasLive = query.state.data?.some((s) => s.matches.some((m) => m.status.state === 'in'));
+            return hasLive ? 30 * 1000 : false;
+        },
     });
+
+    // Sort: favorites first, then live matches, then the rest
+    const sortedData = data ? [...data].sort((a, b) => {
+        const aFav = favoriteLeagues.includes(a.slug) ? 0 : 1;
+        const bFav = favoriteLeagues.includes(b.slug) ? 0 : 1;
+        if (aFav !== bFav) return aFav - bFav;
+        const aLive = a.matches.some((m) => m.status.state === 'in') ? 0 : 1;
+        const bLive = b.matches.some((m) => m.status.state === 'in') ? 0 : 1;
+        return aLive - bLive;
+    }) : data;
 
     const renderContent = () => {
         if (isLoading) {
-            return (
-                <View style={styles.centered}>
-                    <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.loadingText}>Loading scores...</Text>
-                </View>
-            );
+            return <ScoresSkeleton />;
         }
 
         if (isError) {
@@ -173,7 +186,7 @@ export const ScoresScreen: React.FC = () => {
         return (
             <FlatList
                 style={styles.list}
-                data={data}
+                data={sortedData}
                 keyExtractor={(item) => item.slug}
                 refreshControl={
                     <RefreshControl

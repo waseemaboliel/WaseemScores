@@ -9,13 +9,11 @@ import {
 } from 'react-native';
 import { colors, LEAGUES } from '../constants';
 import type { League } from '../constants';
+import { useFavorites } from '../stores';
 
-interface SearchScreenProps {
-    navigation?: any;
-}
-
-export const SearchScreen: React.FC<SearchScreenProps> = () => {
+export const SearchScreen: React.FC = () => {
     const [query, setQuery] = useState('');
+    const { isLeagueFavorite, toggleFavoriteLeague } = useFavorites();
 
     const filteredLeagues = query.length > 0
         ? LEAGUES.filter((l) =>
@@ -24,6 +22,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = () => {
             (l.country?.toLowerCase().includes(query.toLowerCase()) ?? false)
         )
         : LEAGUES;
+
+    // Sort favorites first
+    const sortedLeagues = [...filteredLeagues].sort((a, b) => {
+        const aFav = isLeagueFavorite(a.slug) ? 0 : 1;
+        const bFav = isLeagueFavorite(b.slug) ? 0 : 1;
+        return aFav - bFav;
+    });
 
     return (
         <View style={styles.container}>
@@ -45,10 +50,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = () => {
             </View>
 
             <FlatList
-                data={filteredLeagues}
+                data={sortedLeagues}
                 keyExtractor={(item) => item.slug}
                 renderItem={({ item }) => (
                     <View style={styles.leagueRow}>
+                        <TouchableOpacity
+                            onPress={() => toggleFavoriteLeague(item.slug)}
+                            style={styles.starBtn}
+                        >
+                            <Text style={styles.starText}>
+                                {isLeagueFavorite(item.slug) ? '★' : '☆'}
+                            </Text>
+                        </TouchableOpacity>
                         <View style={styles.leagueInfo}>
                             <Text style={styles.leagueName}>{item.name}</Text>
                             <Text style={styles.leagueDetail}>
@@ -107,6 +120,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: colors.separator,
+    },
+    starBtn: {
+        marginRight: 12,
+        padding: 4,
+    },
+    starText: {
+        fontSize: 20,
+        color: colors.primary,
     },
     leagueInfo: {
         flex: 1,
