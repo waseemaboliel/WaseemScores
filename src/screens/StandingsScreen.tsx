@@ -10,22 +10,22 @@ import {
 } from 'react-native';
 import { useStandings, useTournamentCalendar, useBracket } from '../hooks';
 import { StandingsTable, BracketView } from '../components';
-import { colors, getTopLeagues } from '../constants';
+import { colors, LEAGUES } from '../constants';
 import type { League } from '../constants';
 
-const TOP_LEAGUES = getTopLeagues().filter((l) => l.hasStandings);
+const ALL_LEAGUES = LEAGUES;
 
 type Tab = 'groups' | 'bracket';
 
 export const StandingsScreen: React.FC = () => {
-    const [selectedLeague, setSelectedLeague] = useState<League>(TOP_LEAGUES[0]);
+    const [selectedLeague, setSelectedLeague] = useState<League>(ALL_LEAGUES[0]);
     const [activeTab, setActiveTab] = useState<Tab>('groups');
 
     const { data, isLoading, isError, refetch, isRefetching } = useStandings(
         selectedLeague.slug
     );
 
-    const { data: calendarRounds } = useTournamentCalendar(selectedLeague.slug);
+    const { data: calendarRounds } = useTournamentCalendar(selectedLeague.slug, selectedLeague.hasStandings);
     const hasKnockouts = (calendarRounds?.length ?? 0) > 0;
 
     const { data: bracketData, isLoading: bracketLoading } = useBracket(
@@ -42,7 +42,7 @@ export const StandingsScreen: React.FC = () => {
                 style={styles.leaguePicker}
                 contentContainerStyle={styles.leaguePickerContent}
             >
-                {TOP_LEAGUES.map((league) => (
+                {ALL_LEAGUES.map((league) => (
                     <TouchableOpacity
                         key={league.slug}
                         style={[
@@ -51,7 +51,7 @@ export const StandingsScreen: React.FC = () => {
                         ]}
                         onPress={() => {
                             setSelectedLeague(league);
-                            setActiveTab('groups');
+                            setActiveTab(league.hasStandings ? 'groups' : 'bracket');
                         }}
                     >
                         <Text
@@ -67,16 +67,18 @@ export const StandingsScreen: React.FC = () => {
             </ScrollView>
 
             {/* Groups / Bracket Toggle */}
-            {hasKnockouts && (
+            {(hasKnockouts || !selectedLeague.hasStandings) && (
                 <View style={styles.tabBar}>
-                    <TouchableOpacity
-                        style={[styles.tabBtn, activeTab === 'groups' && styles.tabBtnActive]}
-                        onPress={() => setActiveTab('groups')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'groups' && styles.tabTextActive]}>
-                            Groups
-                        </Text>
-                    </TouchableOpacity>
+                    {selectedLeague.hasStandings && (
+                        <TouchableOpacity
+                            style={[styles.tabBtn, activeTab === 'groups' && styles.tabBtnActive]}
+                            onPress={() => setActiveTab('groups')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'groups' && styles.tabTextActive]}>
+                                Groups
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         style={[styles.tabBtn, activeTab === 'bracket' && styles.tabBtnActive]}
                         onPress={() => setActiveTab('bracket')}

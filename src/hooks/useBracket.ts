@@ -49,19 +49,20 @@ const formatDate = (isoDate: string): string => {
 };
 
 /** Fetches the tournament calendar (rounds) for a given league */
-export const useTournamentCalendar = (slug: string) => {
+export const useTournamentCalendar = (slug: string, hasGroupStage: boolean = true) => {
     return useQuery({
         queryKey: ['calendar', slug],
         queryFn: async () => {
             const data = await espnApi.getScoreboard(slug);
             const league = data.leagues?.[0];
             const calendar = league?.calendar ?? [];
-            // Extract knockout entries (skip Group stage, value=1)
             const entries: CalendarEntry[] = [];
             for (const section of calendar) {
                 if (section.entries) {
                     for (const entry of section.entries) {
-                        if (entry.value !== '1') {
+                        // For tournaments with group stages, skip value=1 (group round)
+                        // For cups, include all rounds
+                        if (!hasGroupStage || entry.value !== '1') {
                             entries.push(entry);
                         }
                     }
