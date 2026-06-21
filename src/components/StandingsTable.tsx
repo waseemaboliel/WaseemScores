@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import type { ParsedStandingsEntry } from '../api';
 import { colors } from '../constants';
 
 interface StandingsTableProps {
     entries: ParsedStandingsEntry[];
     leagueName?: string;
+    onTeamPress?: (teamId: string, teamName: string) => void;
 }
 
-export const StandingsTable: React.FC<StandingsTableProps> = ({ entries, leagueName }) => {
+export const StandingsTable: React.FC<StandingsTableProps> = ({ entries, leagueName, onTeamPress }) => {
     return (
         <View style={styles.container}>
             {leagueName && <Text style={styles.title}>{leagueName}</Text>}
@@ -27,7 +28,12 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ entries, leagueN
 
             {/* Rows */}
             {entries.map((entry) => (
-                <View key={entry.team.id} style={styles.row}>
+                <TouchableOpacity
+                    key={entry.team.id}
+                    style={styles.row}
+                    onPress={() => onTeamPress?.(entry.team.id, entry.team.name)}
+                    activeOpacity={0.6}
+                >
                     {/* Position with zone indicator */}
                     <View style={styles.posContainer}>
                         {entry.note ? (
@@ -59,7 +65,7 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({ entries, leagueN
                         {entry.goalDifference > 0 ? `+${entry.goalDifference}` : entry.goalDifference}
                     </Text>
                     <Text style={[styles.statText, styles.ptsCell, styles.ptsText]}>{entry.points}</Text>
-                </View>
+                </TouchableOpacity>
             ))}
 
             {/* Zone Legend */}

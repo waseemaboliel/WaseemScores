@@ -3,7 +3,6 @@ import {
     View,
     Text,
     ScrollView,
-    Image,
     StyleSheet,
     ActivityIndicator,
 } from 'react-native';
@@ -18,7 +17,11 @@ interface PlayerProfileParams {
     slug: string;
 }
 
-const HEADSHOT_BASE = 'https://a.espncdn.com/i/headshots/soccer/players/full/';
+const getInitials = (name: string): string => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+};
 
 export const PlayerProfileScreen: React.FC = () => {
     const route = useRoute();
@@ -48,7 +51,7 @@ export const PlayerProfileScreen: React.FC = () => {
     const stats = overviewData?.statistics;
     const gameLog = overviewData?.gameLog;
 
-    const headshotUrl = athlete.headshot?.href ?? `${HEADSHOT_BASE}${playerId}.png`;
+    const displayName = athlete.displayName ?? playerName;
 
     // Build stat rows from splits
     const statLabels = stats?.labels ?? [];
@@ -63,13 +66,11 @@ export const PlayerProfileScreen: React.FC = () => {
         <ScrollView style={styles.container}>
             {/* Player Header */}
             <View style={styles.header}>
-                <Image
-                    source={{ uri: headshotUrl }}
-                    style={styles.headshot}
-                    defaultSource={require('../../assets/icon.png')}
-                />
+                <View style={styles.headshot}>
+                    <Text style={styles.headshotInitials}>{getInitials(displayName)}</Text>
+                </View>
                 <View style={styles.headerInfo}>
-                    <Text style={styles.playerName}>{athlete.displayName ?? playerName}</Text>
+                    <Text style={styles.playerName}>{displayName}</Text>
                     {athlete.position && (
                         <Text style={styles.position}>{athlete.position.displayName}</Text>
                     )}
@@ -216,6 +217,13 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 40,
         backgroundColor: colors.surfaceLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headshotInitials: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: colors.textMuted,
     },
     headerInfo: {
         flex: 1,

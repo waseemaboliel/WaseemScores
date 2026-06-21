@@ -53,46 +53,129 @@ export type ScoresStackParamList = {
     Settings: undefined;
 };
 
-const Stack = createNativeStackNavigator<ScoresStackParamList>();
+export type StandingsStackParamList = {
+    StandingsList: undefined;
+    TeamDetail: {
+        teamId: string;
+        slug: string;
+        teamName: string;
+    };
+    PlayerProfile: {
+        playerId: string;
+        playerName: string;
+        slug: string;
+    };
+    MatchDetail: {
+        eventId: string;
+        slug: string;
+        homeTeam: string;
+        awayTeam: string;
+    };
+};
+
+export type StatsStackParamList = {
+    TopScorersList: undefined;
+    TeamDetail: {
+        teamId: string;
+        slug: string;
+        teamName: string;
+    };
+    PlayerProfile: {
+        playerId: string;
+        playerName: string;
+        slug: string;
+    };
+};
+
+const ScoresStackNav = createNativeStackNavigator<ScoresStackParamList>();
+const StandingsStackNav = createNativeStackNavigator<StandingsStackParamList>();
+const StatsStackNav = createNativeStackNavigator<StatsStackParamList>();
 const Tab = createBottomTabNavigator();
 
+const sharedScreenOptions = {
+    headerStyle: { backgroundColor: colors.surface },
+    headerTintColor: colors.textPrimary,
+    headerTitleStyle: { fontWeight: '700' as const, fontSize: 16 },
+    headerShadowVisible: false,
+};
+
 const ScoresStack: React.FC = () => (
-    <Stack.Navigator
-        screenOptions={{
-            headerStyle: { backgroundColor: colors.surface },
-            headerTintColor: colors.textPrimary,
-            headerTitleStyle: { fontWeight: '700', fontSize: 16 },
-            headerShadowVisible: false,
-        }}
-    >
-        <Stack.Screen name="ScoresList" component={ScoresScreen} options={{ title: 'Scores' }} />
-        <Stack.Screen
+    <ScoresStackNav.Navigator screenOptions={sharedScreenOptions}>
+        <ScoresStackNav.Screen name="ScoresList" component={ScoresScreen} options={{ title: 'Scores' }} />
+        <ScoresStackNav.Screen
             name="MatchDetail"
             component={MatchDetailScreen}
             options={({ route }) => ({
                 title: `${route.params.homeTeam} vs ${route.params.awayTeam}`,
             })}
         />
-        <Stack.Screen
+        <ScoresStackNav.Screen
             name="TeamDetail"
             component={TeamDetailScreen}
             options={({ route }) => ({
                 title: route.params.teamName,
             })}
         />
-        <Stack.Screen
+        <ScoresStackNav.Screen
             name="PlayerProfile"
             component={PlayerProfileScreen}
             options={({ route }) => ({
                 title: route.params.playerName,
             })}
         />
-        <Stack.Screen
+        <ScoresStackNav.Screen
             name="Settings"
             component={SettingsScreen}
             options={{ title: 'Settings' }}
         />
-    </Stack.Navigator>
+    </ScoresStackNav.Navigator>
+);
+
+const StandingsStack: React.FC = () => (
+    <StandingsStackNav.Navigator screenOptions={sharedScreenOptions}>
+        <StandingsStackNav.Screen name="StandingsList" component={StandingsScreen} options={{ title: 'Standings' }} />
+        <StandingsStackNav.Screen
+            name="TeamDetail"
+            component={TeamDetailScreen}
+            options={({ route }) => ({
+                title: route.params.teamName,
+            })}
+        />
+        <StandingsStackNav.Screen
+            name="PlayerProfile"
+            component={PlayerProfileScreen}
+            options={({ route }) => ({
+                title: route.params.playerName,
+            })}
+        />
+        <StandingsStackNav.Screen
+            name="MatchDetail"
+            component={MatchDetailScreen}
+            options={({ route }) => ({
+                title: `${route.params.homeTeam} vs ${route.params.awayTeam}`,
+            })}
+        />
+    </StandingsStackNav.Navigator>
+);
+
+const StatsStack: React.FC = () => (
+    <StatsStackNav.Navigator screenOptions={sharedScreenOptions}>
+        <StatsStackNav.Screen name="TopScorersList" component={TopScorersScreen} options={{ title: 'Top Scorers' }} />
+        <StatsStackNav.Screen
+            name="TeamDetail"
+            component={TeamDetailScreen}
+            options={({ route }) => ({
+                title: route.params.teamName,
+            })}
+        />
+        <StatsStackNav.Screen
+            name="PlayerProfile"
+            component={PlayerProfileScreen}
+            options={({ route }) => ({
+                title: route.params.playerName,
+            })}
+        />
+    </StatsStackNav.Navigator>
 );
 
 export const AppNavigator: React.FC = () => {
@@ -136,23 +219,12 @@ export const AppNavigator: React.FC = () => {
                 />
                 <Tab.Screen
                     name="Standings"
-                    component={StandingsScreen}
+                    component={StandingsStack}
                     options={{
-                        title: 'Standings',
                         tabBarLabel: 'Standings',
                         tabBarIcon: ({ color, size }) => (
                             <Ionicons name="podium-outline" size={size} color={color} />
                         ),
-                        headerShown: true,
-                        headerStyle: {
-                            backgroundColor: colors.surface,
-                        },
-                        headerTintColor: colors.textPrimary,
-                        headerTitleStyle: {
-                            fontWeight: '700',
-                            fontSize: 18,
-                        },
-                        headerShadowVisible: false,
                     }}
                 />
                 <Tab.Screen
@@ -178,23 +250,12 @@ export const AppNavigator: React.FC = () => {
                 />
                 <Tab.Screen
                     name="Stats"
-                    component={TopScorersScreen}
+                    component={StatsStack}
                     options={{
-                        title: 'Top Scorers',
                         tabBarLabel: 'Stats',
                         tabBarIcon: ({ color, size }) => (
                             <Ionicons name="stats-chart-outline" size={size} color={color} />
                         ),
-                        headerShown: true,
-                        headerStyle: {
-                            backgroundColor: colors.surface,
-                        },
-                        headerTintColor: colors.textPrimary,
-                        headerTitleStyle: {
-                            fontWeight: '700',
-                            fontSize: 18,
-                        },
-                        headerShadowVisible: false,
                     }}
                 />
                 <Tab.Screen

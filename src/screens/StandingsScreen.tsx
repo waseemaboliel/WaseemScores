@@ -8,11 +8,13 @@ import {
     TouchableOpacity,
     RefreshControl,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStandings, useSeasons, useTournamentCalendar, useBracket, useSeasonBracket } from '../hooks';
 import { StandingsTable, BracketView, StandingsSkeleton } from '../components';
 import { colors, LEAGUES, getLeagueBySlug } from '../constants';
 import type { League } from '../constants';
+import type { StandingsStackParamList } from '../navigation';
 
 const ALL_LEAGUES = LEAGUES;
 
@@ -20,6 +22,7 @@ type Tab = 'groups' | 'bracket';
 
 export const StandingsScreen: React.FC = () => {
     const route = useRoute<any>();
+    const navigation = useNavigation<NativeStackNavigationProp<StandingsStackParamList>>();
     const [selectedLeague, setSelectedLeague] = useState<League>(ALL_LEAGUES[0]);
     const [activeTab, setActiveTab] = useState<Tab>('groups');
     const [selectedSeason, setSelectedSeason] = useState<number | undefined>(undefined);
@@ -183,6 +186,13 @@ export const StandingsScreen: React.FC = () => {
                                 key={index}
                                 entries={group.entries}
                                 leagueName={data.length > 1 ? group.name : selectedLeague.name}
+                                onTeamPress={(teamId, teamName) =>
+                                    navigation.navigate('TeamDetail', {
+                                        teamId,
+                                        slug: selectedLeague.slug,
+                                        teamName,
+                                    })
+                                }
                             />
                         ))}
                         <View style={styles.bottomPadding} />

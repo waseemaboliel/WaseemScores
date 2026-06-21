@@ -9,15 +9,19 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { espnApi } from '../api';
 import { colors } from '../constants';
 import { LEAGUES, DEFAULT_SCOREBOARD_LEAGUES } from '../constants/leagues';
+import type { StatsStackParamList } from '../navigation';
 
 type Tab = 'goals' | 'assists';
 
 export const TopScorersScreen: React.FC = () => {
     const [selectedLeague, setSelectedLeague] = useState(DEFAULT_SCOREBOARD_LEAGUES[0]);
     const [tab, setTab] = useState<Tab>('goals');
+    const navigation = useNavigation<NativeStackNavigationProp<StatsStackParamList>>();
 
     const league = LEAGUES.find((l) => l.slug === selectedLeague) ?? LEAGUES[0];
 
@@ -110,7 +114,16 @@ export const TopScorersScreen: React.FC = () => {
                         const assists = matchA?.[1] ?? '-';
 
                         return (
-                            <View key={athlete?.id ?? index} style={styles.row}>
+                            <TouchableOpacity
+                                key={athlete?.id ?? index}
+                                style={styles.row}
+                                onPress={() => athlete?.id && navigation.navigate('PlayerProfile', {
+                                    playerId: athlete.id,
+                                    playerName: athlete.displayName ?? '',
+                                    slug: league.slug,
+                                })}
+                                activeOpacity={0.6}
+                            >
                                 <Text style={styles.rank}>{index + 1}</Text>
                                 <View style={styles.playerInfo}>
                                     {(athlete?.team?.logos?.[0]?.href || athlete?.team?.logo) && (
@@ -135,7 +148,7 @@ export const TopScorersScreen: React.FC = () => {
                                 <Text style={[styles.stat, tab === 'assists' && styles.statHighlight]}>
                                     {assists}
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                         );
                     })}
 

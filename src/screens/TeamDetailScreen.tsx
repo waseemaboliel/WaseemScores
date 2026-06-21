@@ -26,7 +26,11 @@ interface TeamDetailParams {
 
 type TabKey = 'overview' | 'squad' | 'fixtures';
 
-const HEADSHOT_BASE = 'https://a.espncdn.com/i/headshots/soccer/players/full/';
+const getInitials = (name: string): string => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+};
 
 export const TeamDetailScreen: React.FC = () => {
     const route = useRoute();
@@ -72,7 +76,6 @@ export const TeamDetailScreen: React.FC = () => {
     const standing = team?.standingSummary;
     const events = scheduleData?.events ?? [];
     const athletes = rosterData?.athletes ?? [];
-    const coach = rosterData?.coach;
 
     // Group athletes by position
     const positionGroups = athletes.reduce((acc: Record<string, any[]>, player: any) => {
@@ -147,17 +150,6 @@ export const TeamDetailScreen: React.FC = () => {
                     </TouchableOpacity>
                 </View>
             )}
-
-            {/* Coach */}
-            {coach && (
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Manager</Text>
-                    <View style={styles.coachRow}>
-                        <Text style={styles.coachName}>{coach.displayName ?? coach.firstName + ' ' + coach.lastName}</Text>
-                        {coach.nationality && <Text style={styles.coachNat}>{coach.nationality}</Text>}
-                    </View>
-                </View>
-            )}
         </>
     );
 
@@ -178,11 +170,9 @@ export const TeamDetailScreen: React.FC = () => {
                                 });
                             }}
                         >
-                            <Image
-                                source={{ uri: `${HEADSHOT_BASE}${player.id}.png` }}
-                                style={styles.playerPhoto}
-                                defaultSource={require('../../assets/icon.png')}
-                            />
+                            <View style={styles.playerPhoto}>
+                                <Text style={styles.playerInitials}>{getInitials(player.displayName)}</Text>
+                            </View>
                             <View style={styles.playerInfo}>
                                 <Text style={styles.playerName}>{player.displayName}</Text>
                                 <View style={styles.playerMeta}>
@@ -466,6 +456,13 @@ const styles = StyleSheet.create({
         height: 40,
         borderRadius: 20,
         backgroundColor: colors.surfaceLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    playerInitials: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: colors.textMuted,
     },
     playerInfo: {
         flex: 1,

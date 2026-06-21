@@ -6,11 +6,16 @@ import {
     ScrollView,
     StyleSheet,
     ActivityIndicator,
+    TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { espnApi } from '../api';
 import { colors } from '../constants';
 import { FormationView, ErrorState } from '../components';
+import type { ScoresStackParamList } from '../navigation';
 
 interface MatchDetailScreenProps {
     route: {
@@ -25,16 +30,19 @@ interface MatchDetailScreenProps {
 
 interface KeyEvent {
     id: string;
-    type: { text: string };
+    type: { text: string; type: string };
     text: string;
+    shortText?: string;
     clock: { displayValue: string };
     scoringPlay?: boolean;
+    team?: { id: string; displayName: string };
+    participants?: { athlete: { id: string; displayName: string } }[];
 }
 
 interface PlayerEntry {
     starter: boolean;
     jersey: string;
-    athlete: { displayName: string; shortName: string };
+    athlete: { id: string; displayName: string; shortName: string };
     position?: { abbreviation: string };
     subbedIn?: boolean;
     subbedOut?: boolean;
@@ -67,6 +75,7 @@ const STAT_DISPLAY: Record<string, string> = {
 
 export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) => {
     const { eventId, slug, homeTeam, awayTeam } = route.params;
+    const navigation = useNavigation<NativeStackNavigationProp<ScoresStackParamList>>();
 
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ['matchDetail', slug, eventId],
@@ -98,9 +107,53 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
 
     // Filter meaningful key events (goals, cards, subs)
     const importantEvents = keyEvents.filter((e) => {
-        const type = e.type?.text?.toLowerCase() ?? '';
+        const type = e.type?.type ?? e.type?.text?.toLowerCase() ?? '';
         return type.includes('goal') || type.includes('card') || type.includes('substitution') || type.includes('penalty');
     });
+
+    const getEventIcon = (event: KeyEvent): { name: string; color: string } => {
+        const type = event.type?.type ?? '';
+        if (type === 'own-goal') return { name: 'football', color: '#e74c3c' };
+        if (type.includes('goal') || event.scoringPlay) return { name: 'football', color: colors.textPrimary };
+        if (type.includes('red')) return { name: 'square', color: '#e74c3c' };
+        if (type.includes('yellow')) return { name: 'square', color: '#f1c40f' };
+        if (type.includes('substitution')) return { name: 'swap-horizontal', color: colors.primary };
+        return { name: 'ellipse', color: colors.textMuted };
+    };
+
+    const getEventDisplay = (event: KeyEvent): { main: string; sub?: string } => {
+        const type = event.type?.type ?? '';
+        const players = event.participants ?? [];
+        const team = event.team?.displayName ?? '';
+
+        if ((type.includes('goal') || event.scoringPlay) && players.length > 0) {
+            const scorer = players[0]?.athlete?.displayName ?? '';
+            const isOwnGoal = type === 'own-goal';
+            const assister = players[1]?.athlete?.displayName;
+            return {
+                main: isOwnGoal ? `${scorer} (OG)` : scorer,
+                sub: isOwnGoal ? team : (assister ? `Assist: ${assister}` : team),
+            };
+        }
+
+        if (type.includes('card') && players.length > 0) {
+            return {
+                main: players[0]?.athlete?.displayName ?? '',
+                sub: team,
+            };
+        }
+
+        if (type.includes('substitution') && players.length >= 2) {
+            return {
+                main: `${players[0]?.athlete?.displayName}`,
+                sub: `for ${players[1]?.athlete?.displayName}`,
+            };
+        }
+
+        // Fallback to shortText or parsed text
+        if (event.shortText) return { main: event.shortText };
+        return { main: event.text?.split('.')[0] ?? '' };
+    };
 
     return (
         <ScrollView style={styles.container}>
@@ -108,21 +161,44 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
             {importantEvents.length > 0 && (
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Match Events</Text>
-                    {importantEvents.map((event, i) => (
-                        <View key={event.id || i} style={styles.eventRow}>
-                            <Text style={styles.eventTime}>{event.clock?.displayValue ?? ''}</Text>
-                            <View style={styles.eventIconContainer}>
-                                <Text style={styles.eventIcon}>
-                                    {event.type?.text?.toLowerCase().includes('goal') ? '⚽' :
-                                        event.type?.text?.toLowerCase().includes('yellow') ? '🟨' :
-                                            event.type?.text?.toLowerCase().includes('red') ? '🟥' :
-                                                event.type?.text?.toLowerCase().includes('substitution') ? '🔄' :
-                                                    event.type?.text?.toLowerCase().includes('penalty') ? '⚽' : '•'}
+                    {importantEvents.map((event, i) => {
+                        const icon = getEventIcon(event);
+                        const display = getEventDisplay(event);
+                        const isGoal = event.type?.type?.includes('goal') || event.scoringPlay;
+                        const isOwnGoal = event.type?.type === 'own-goal';
+                        const mainPlayer = event.participants?.[0]?.athlete;
+                        return (
+                            <TouchableOpacity
+                                key={event.id || i}
+                                style={[styles.eventRow, isGoal && !isOwnGoal && styles.eventRowGoal, isOwnGoal && styles.eventRowOwnGoal]}
+                                onPress={() => mainPlayer && navigation.navigate('PlayerProfile', {
+                                    playerId: mainPlayer.id,
+                                    playerName: mainPlayer.displayName,
+                                    slug,
+                                })}
+                                activeOpacity={mainPlayer ? 0.6 : 1}
+                                disabled={!mainPlayer}
+                            >
+                                <Text style={[styles.eventTime, isGoal && !isOwnGoal && styles.eventTimeGoal, isOwnGoal && styles.eventTimeOwnGoal]}>
+                                    {event.clock?.displayValue ?? ''}
                                 </Text>
-                            </View>
-                            <Text style={styles.eventText} numberOfLines={2}>{event.text}</Text>
-                        </View>
-                    ))}
+                                <View style={[styles.eventIconContainer, isGoal && styles.eventIconGoal]}>
+                                    <Ionicons name={icon.name as any} size={isGoal ? 16 : 14} color={icon.color} />
+                                </View>
+                                <View style={styles.eventContent}>
+                                    <Text style={[styles.eventMain, isGoal && styles.eventMainGoal]} numberOfLines={1}>
+                                        {display.main}
+                                    </Text>
+                                    {display.sub && (
+                                        <Text style={styles.eventSub} numberOfLines={1}>{display.sub}</Text>
+                                    )}
+                                </View>
+                                {mainPlayer && (
+                                    <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+                                )}
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
             )}
 
@@ -231,18 +307,38 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
                                     {homeRoster.roster
                                         .filter((p) => p.starter)
                                         .map((p, i) => (
-                                            <Text key={i} style={styles.playerText}>
-                                                {p.jersey} {p.athlete?.shortName ?? p.athlete?.displayName}
-                                            </Text>
+                                            <TouchableOpacity
+                                                key={i}
+                                                onPress={() => navigation.navigate('PlayerProfile', {
+                                                    playerId: p.athlete?.id,
+                                                    playerName: p.athlete?.displayName,
+                                                    slug,
+                                                })}
+                                                activeOpacity={0.6}
+                                            >
+                                                <Text style={styles.playerText}>
+                                                    {p.jersey} {p.athlete?.shortName ?? p.athlete?.displayName}
+                                                </Text>
+                                            </TouchableOpacity>
                                         ))}
                                 </View>
                                 <View style={styles.lineupColumn}>
                                     {awayRoster.roster
                                         .filter((p) => p.starter)
                                         .map((p, i) => (
-                                            <Text key={i} style={[styles.playerText, styles.playerTextRight]}>
-                                                {p.athlete?.shortName ?? p.athlete?.displayName} {p.jersey}
-                                            </Text>
+                                            <TouchableOpacity
+                                                key={i}
+                                                onPress={() => navigation.navigate('PlayerProfile', {
+                                                    playerId: p.athlete?.id,
+                                                    playerName: p.athlete?.displayName,
+                                                    slug,
+                                                })}
+                                                activeOpacity={0.6}
+                                            >
+                                                <Text style={[styles.playerText, styles.playerTextRight]}>
+                                                    {p.athlete?.shortName ?? p.athlete?.displayName} {p.jersey}
+                                                </Text>
+                                            </TouchableOpacity>
                                         ))}
                                 </View>
                             </View>
@@ -256,18 +352,38 @@ export const MatchDetailScreen: React.FC<MatchDetailScreenProps> = ({ route }) =
                             {homeRoster.roster
                                 .filter((p) => !p.starter)
                                 .map((p, i) => (
-                                    <Text key={i} style={[styles.playerText, styles.subText]}>
-                                        {p.jersey} {p.athlete?.shortName ?? p.athlete?.displayName}
-                                    </Text>
+                                    <TouchableOpacity
+                                        key={i}
+                                        onPress={() => navigation.navigate('PlayerProfile', {
+                                            playerId: p.athlete?.id,
+                                            playerName: p.athlete?.displayName,
+                                            slug,
+                                        })}
+                                        activeOpacity={0.6}
+                                    >
+                                        <Text style={[styles.playerText, styles.subText]}>
+                                            {p.jersey} {p.athlete?.shortName ?? p.athlete?.displayName}
+                                        </Text>
+                                    </TouchableOpacity>
                                 ))}
                         </View>
                         <View style={styles.lineupColumn}>
                             {awayRoster.roster
                                 .filter((p) => !p.starter)
                                 .map((p, i) => (
-                                    <Text key={i} style={[styles.playerText, styles.playerTextRight, styles.subText]}>
-                                        {p.athlete?.shortName ?? p.athlete?.displayName} {p.jersey}
-                                    </Text>
+                                    <TouchableOpacity
+                                        key={i}
+                                        onPress={() => navigation.navigate('PlayerProfile', {
+                                            playerId: p.athlete?.id,
+                                            playerName: p.athlete?.displayName,
+                                            slug,
+                                        })}
+                                        activeOpacity={0.6}
+                                    >
+                                        <Text style={[styles.playerText, styles.playerTextRight, styles.subText]}>
+                                            {p.athlete?.shortName ?? p.athlete?.displayName} {p.jersey}
+                                        </Text>
+                                    </TouchableOpacity>
                                 ))}
                         </View>
                     </View>
@@ -309,27 +425,63 @@ const styles = StyleSheet.create({
     // Events
     eventRow: {
         flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 10,
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
+    },
+    eventRowGoal: {
+        backgroundColor: colors.primary + '10',
+        marginHorizontal: -16,
+        paddingHorizontal: 16,
+        borderBottomColor: colors.primary + '20',
+    },
+    eventRowOwnGoal: {
+        backgroundColor: '#e74c3c10',
+        marginHorizontal: -16,
+        paddingHorizontal: 16,
+        borderBottomColor: '#e74c3c20',
     },
     eventTime: {
-        width: 36,
-        fontSize: 12,
-        fontWeight: '600',
+        width: 42,
+        fontSize: 13,
+        fontWeight: '700',
         color: colors.textSecondary,
     },
+    eventTimeGoal: {
+        color: colors.primary,
+    },
+    eventTimeOwnGoal: {
+        color: '#e74c3c',
+    },
     eventIconContainer: {
-        width: 24,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: colors.surfaceLight,
         alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
     },
-    eventIcon: {
-        fontSize: 14,
+    eventIconGoal: {
+        backgroundColor: colors.primary + '20',
     },
-    eventText: {
+    eventContent: {
         flex: 1,
-        fontSize: 13,
+    },
+    eventMain: {
+        fontSize: 14,
+        fontWeight: '600',
         color: colors.textPrimary,
-        marginLeft: 4,
+    },
+    eventMainGoal: {
+        color: colors.primary,
+        fontWeight: '700',
+    },
+    eventSub: {
+        fontSize: 12,
+        color: colors.textMuted,
+        marginTop: 1,
     },
     // Stats
     statRow: {
